@@ -1,3 +1,63 @@
+set nocompatible               " be iMproved
+filetype off                   " required!
+filetype plugin indent off     " required!
+
+if has('vim_starting')
+  set runtimepath+=~/.vim/bundle/neobundle.vim/
+  call neobundle#rc(expand('~/.vim/bundle/'))
+endif
+NeoBundle 'Shougo/neobundle.vim'
+NeoBundle 'thinca/vim-visualstar'
+NeoBundle 'Lokaltog/vim-easymotion'
+NeoBundle 'tomtom/tcomment_vim'
+NeoBundle "YankRing.vim"
+NeoBundle 'molokai'
+NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
+
+"補完のためのいろいろ
+NeoBundle 'Shougo/neocomplcache'
+NeoBundle 'Shougo/neosnippet'
+NeoBundle 'Shougo/neocomplcache-rsense'
+
+NeoBundle 'skwp/vim-rspec'
+"colorscheme molokai
+"filetype plugin indent on     " required!
+
+if has('multi_byte_ime') || has('xim')
+      " 日本語入力ON時のカーソルの色を設定
+      highlight CursorIM guibg=Orange guifg=NONE
+endif
+" 英語の補完
+NeoBundle 'ujihisa/neco-look.git'
+
+ " Vi互換モードをオフ（Vimの拡張機能を有効）
+ set nocompatible
+ set cursorline 
+ "set t_Co=256
+ highlight cursorline term=reverse cterm=reverse ctermbg=256
+ " ファイル名と内容によってファイルタイプを判別し、ファイルタイププラグインを有効にする
+ filetype indent plugin on
+ " 色づけをオン
+ syntax on
+ 
+ 
+ " 強く推奨するオプション
+ " バッファを保存しなくても他のバッファを表示できるようにする
+ set hidden
+ " コマンドライン補完を便利に
+ set wildmenu
+ 
+ " タイプ途中のコマンドを画面最下行に表示
+ set showcmd
+ 
+ " 検索語を強調表示（<C-L>を押すと現在の強調表示を解除する）
+ set hlsearch
+ 
+ " 歴史的にモードラインはセキュリティ上の脆弱性になっていたので、
+ " オフにして代わりに上記のsecuremodelinesスクリプトを使うとよい。
+ " set nomodeline
+ 
+ 
  " 検索時に大文字・小文字を区別しない。ただし、検索後に大文字小文字が
  " 混在しているときは区別する
  set ignorecase
@@ -46,11 +106,12 @@
  
  
  "------------------------------------------------------------
+ " Indentation options {{{1
  " インデント関連のオプション {{{1
  "
  " タブ文字の代わりにスペース2個を使う場合の設定。
  " この場合、'tabstop'はデフォルトの8から変えない。
- set shiftwidth=4
+ set shiftwidth=2
  set softtabstop=2
  set expandtab
  
@@ -58,10 +119,8 @@
  " タブ文字を2文字分の幅で表示する。
  "set shiftwidth=2
  "set tabstop=2
- "日本語も大丈夫にするやつ
- set ambiwidth=double
  
-
+ 
 "--------------------------------------------------------------
 " 文法チェックするひとたち
 " ruby
@@ -78,11 +137,10 @@ augroup END
 
 
 
- 
+
  "------------------------------------------------------------
  " Mappings {{{1
  " マッピング
- "
  " Yの動作をDやCと同じにする
  map Y y$
  
