@@ -31,11 +31,14 @@ NeoBundle 'Shougo/vimproc', {
       \     }
       \   }
 "ys\で かこえるやつ
-NeoBundle 'https://github.com/tpope/vim-surround.git'
+NeoBundle 'tpope/vim-surround.git'
 
 "vimでzencoding
 NeoBundle 'https://github.com/mattn/zencoding-vim.git'
 let g:use_zen_complete_tag = 1
+
+"つにunite.vim
+NeoBundle 'Shougo/unite.vim'
 
 if has('multi_byte_ime') || has('xim')
       " 日本語入力ON時のカーソルの色を設定
