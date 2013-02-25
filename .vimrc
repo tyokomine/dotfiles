@@ -134,8 +134,8 @@ NeoBundle 'ujihisa/neco-look.git'
  
  " インデントにハードタブを使う場合の設定。
  " タブ文字を2文字分の幅で表示する。
- set shiftwidth=4
- set tabstop=4
+ set shiftwidth=2
+ set tabstop=2
  
  
 "--------------------------------------------------------------
