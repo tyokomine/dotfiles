@@ -37,6 +37,9 @@ NeoBundle 'tpope/vim-surround.git'
 NeoBundle 'https://github.com/mattn/zencoding-vim.git'
 let g:use_zen_complete_tag = 1
 
+"つにunite.vim
+NeoBundle 'Shougo/unite.vim'
+
 if has('multi_byte_ime') || has('xim')
       " 日本語入力ON時のカーソルの色を設定
       highlight CursorIM guibg=Orange guifg=NONE
@@ -131,8 +134,8 @@ NeoBundle 'ujihisa/neco-look.git'
  
  " インデントにハードタブを使う場合の設定。
  " タブ文字を2文字分の幅で表示する。
- set shiftwidth=4
- set tabstop=4
+ set shiftwidth=2
+ set tabstop=2
  
  
 "--------------------------------------------------------------
