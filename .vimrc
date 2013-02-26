@@ -31,7 +31,7 @@ NeoBundle 'Shougo/vimproc', {
       \     }
       \   }
 "ys\で かこえるやつ
-NeoBundle 'https://github.com/tpope/vim-surround.git'
+NeoBundle 'tpope/vim-surround.git'
 
 "vimでzencoding
 NeoBundle 'https://github.com/mattn/zencoding-vim.git'
