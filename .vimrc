@@ -16,12 +16,29 @@ NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 
 "補完のためのいろいろ
 NeoBundle 'Shougo/neocomplcache'
-NeoBundle 'Shougo/neosnippet'
 NeoBundle 'Shougo/neocomplcache-rsense'
 NeoBundle 'Shougo/neosnippet'
 NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
 "colorscheme molokai
+"
+"
+" <TAB>: completion.                                         
+inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"   
+inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>" 
+
+" Plugin key-mappings.
+imap <C-k> <Plug>(neosnippet_expand_or_jump)
+smap <C-k> <Plug>(neosnippet_expand_or_jump)
+
+" SuperTab like snippets behavior.
+imap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
+smap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+
+" For snippet_complete marker.
+"if has('conceal') set conceallevel=2 concealcursor=i
+"endif
+
 "vimで非同期処理できるらしい
 NeoBundle 'Shougo/vimproc', {
       \     'build': {
