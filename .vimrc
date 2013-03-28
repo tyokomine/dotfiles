@@ -21,8 +21,6 @@ NeoBundle 'Shougo/neosnippet'
 NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
 "colorscheme molokai
-"
-"
 " <TAB>: completion.                                         
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"   
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>" 
