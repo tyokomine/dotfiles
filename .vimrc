@@ -242,12 +242,11 @@ endfunction
  "------------------------------------------------------------
    "日本語用の設定
  "------------------------------------------------------------
- 
- if &encoding !=# 'utf-8'
 
-  set encoding=japan
-  set fileencoding=japan
-endif
+ if &encoding !=# 'utf-8'
+   set encoding=japan
+   set fileencoding=japan
+ endif
 if has('iconv')
   let s:enc_euc = 'euc-jp'
   let s:enc_jis = 'iso-2022-jp'
