@@ -72,7 +72,16 @@ NeoBundle 'ujihisa/neco-look.git'
  " 色づけをオン
  syntax on
  
- 
+
+ " カーソル下の単語を置換
+ nnoremap g/ :<C-u>%s/<C-R><C-w>//gc<Left><Left><Left>
+
+ " ファイルを曖昧文字から探し出す
+ NeoBundle 'kien/ctrlp.vim.git'
+ let g:ctrlp_custom_ignore = {
+       \ 'dir':  '\v[\/]\.?(extlib|git|hg|svn)$',
+       \ }
+
  " 強く推奨するオプション
  " バッファを保存しなくても他のバッファを表示できるようにする
  set hidden
