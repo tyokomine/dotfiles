@@ -47,6 +47,7 @@ darwin*)
 # "o"でopen
 alias o="open"
 ;;
+esac
 
 # 全コマンドで correct 機能を無効化
 unsetopt correctall
