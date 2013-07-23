@@ -18,7 +18,7 @@ NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 NeoBundle 'Shougo/neocomplcache'
 NeoBundle 'Shougo/neocomplcache-rsense'
 NeoBundle 'Shougo/neosnippet'
-NeoBundle 'honza/snipmate-snippets.git'
+" NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
 "colorscheme molokai
 " <TAB>: completion.                                         
