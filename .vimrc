@@ -86,6 +86,12 @@ nnoremap g/ :<C-u>%s/<C-R><C-w>//gc<Left><Left><Left>
 " syntax + 自動compile
 NeoBundle 'kchmck/vim-coffee-script'
 
+"------------------------------------
+"" vim-coffee-script
+"------------------------------------
+"" 保存時にコンパイル
+autocmd BufWritePost *.coffee silent CoffeeMake! -cb | cwindow | redraw!
+
 " ビジュアルモードで選択した部分を置換
 vnoremap g/ y:<C-u>%s/<C-R>"//gc<Left><Left><Left>
 
