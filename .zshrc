@@ -49,9 +49,7 @@ darwin*)
 # "o"でopen
 alias o="open"
 ;;
-
-# 全コマンドで correct 機能を無効化
-unsetopt correctall
+esac
 
 # tmux list-commands | sed -e 's/ .*$//' よりリストを取得している
  _tmux() {
