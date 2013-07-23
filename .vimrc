@@ -75,9 +75,16 @@ filetype indent plugin on
 " 色づけをオン
 syntax on
 
+" vimにcoffeeファイルタイプを認識させる
+au BufRead,BufNewFile,BufReadPre *.coffee   set filetype=coffee
+" インデントを設定
+autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
 
 " カーソル下の単語を置換
 nnoremap g/ :<C-u>%s/<C-R><C-w>//gc<Left><Left><Left>
+
+" syntax + 自動compile
+NeoBundle 'kchmck/vim-coffee-script'
 
 " ビジュアルモードで選択した部分を置換
 vnoremap g/ y:<C-u>%s/<C-R>"//gc<Left><Left><Left>

@@ -41,8 +41,12 @@ alias tmux="TERM=xterm-256color tmux -u"
 alias v="vim -u NONE --noplugin"
 alias vi="vim"
 
+case "$OSTYPE" in
+	# BSD (contains Mac)
+darwin*)
 # "o"でopen
 alias o="open"
+;;
 
 # 全コマンドで correct 機能を無効化
 unsetopt correctall
