@@ -48,6 +48,7 @@ case "$OSTYPE" in
 darwin*)
 # "o"でopen
 alias o="open"
+export PATH=$PATH:/usr/local/share/npm/bin
 ;;
 esac
 
