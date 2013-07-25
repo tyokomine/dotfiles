@@ -63,7 +63,7 @@ case "$OSTYPE" in
  	 export PATH=/home/homepage/.nodebrew/current/bin:/usr/local/bin:/bin:/usr/bin:/home/homepage/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/homepage/bin
  	 nodebrew use default
  	 phpbrew use php-5.4.12
-	 ssh-agent zsh
-	 ssh-add ~/.ssh/id_dsa
+	 # ssh-agent zsh
+	 # ssh-add ~/.ssh/id_dsa
  	 ;;
 esac
