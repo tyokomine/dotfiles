@@ -186,18 +186,27 @@ set tabstop=2
 
 "--------------------------------------------------------------
 " 文法チェックするひとたち
+"
+"
+" 全般的に文法チェック
+ NeoBundle 'scrooloose/syntastic.git'
 " ruby
-augroup rbsyntaxcheck
-    autocmd!
-    autocmd BufWrite *.rb w !ruby -c
-augroup END
-
-" php
-augroup phpsyntaxcheck
-    autocmd!
-    autocmd BufWrite *.php w !php -l
-augroup END
-
+" augroup rbsyntaxcheck
+"     autocmd!
+"     autocmd BufWrite *.rb w !ruby -c
+" augroup END
+" 
+" " php
+" augroup phpsyntaxcheck
+"     autocmd!
+"     autocmd BufWrite *.php w !php -l
+" augroup END
+" 
+" " coffee
+" augroup coffeesyntaxcheck
+"     autocmd!
+"     autocmd BufWrite *.coffee w !coffee -c
+" augroup END
 "------------------------------------------------------------
 " setting of neocomplcache
 "
