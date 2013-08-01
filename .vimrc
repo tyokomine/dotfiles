@@ -48,6 +48,27 @@ NeoBundle 'Shougo/vimproc', {
 "ys\で かこえるやつ
 NeoBundle 'tpope/vim-surround.git'
 
+" APIのドキュメントを参照する
+" Shift+K
+NeoBundle 'thinca/vim-ref'
+let g:ref_open = 'vsplit'
+let g:ref_refe_cmd = "rurema"
+let g:ref_refe_version = 2
+
+" endを自動挿入
+NeoBundleLazy 'alpaca-tc/vim-endwise.git', {
+			\ 'autoload' : {
+			\   'insert' : 1,
+			\ }}
+" do endを%移動
+NeoBundleLazy 'edsono/vim-matchit', { 'autoload' : {
+			\ 'filetypes': ['ruby', 'html'],
+			\ }}
+
+" 括弧なんてめんどくさい
+NeoBundle "kana/vim-smartinput"
+
+
 " C-cでEsc
 inoremap <C-c> <Esc>
 
