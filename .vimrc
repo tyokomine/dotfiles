@@ -71,6 +71,13 @@ NeoBundle "kana/vim-smartinput"
 
 " C-cでEsc
 inoremap <C-c> <Esc>
+inoremap jj <Esc>
+
+" 挿入モードでのカーソル移動
+inoremap <C-j> <Down>
+inoremap <C-k> <Up>
+inoremap <C-h> <Left>
+inoremap <C-l> <Right>
 
 "vimでzencoding
 NeoBundle 'https://github.com/mattn/zencoding-vim.git'
