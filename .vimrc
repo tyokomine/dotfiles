@@ -79,6 +79,20 @@ inoremap <C-k> <Up>
 inoremap <C-h> <Left>
 inoremap <C-l> <Right>
 
+" .でカレントディレクトリにいけるように
+command! -nargs=? -complete=dir -bang CD  call s:ChangeCurrentDir('<args>', '<bang>')
+function! s:ChangeCurrentDir(directory, bang)
+	if a:directory == ''
+		lcd %:p:h
+	else
+		execute 'lcd' . a:directory
+	endif
+	if a:bang == ''
+		pwd
+	endif
+endfunction
+nnoremap <silent><Space>. :<C-u>CD<CR>
+
 "vimでzencoding
 NeoBundle 'https://github.com/mattn/zencoding-vim.git'
 let g:use_zen_complete_tag = 1
