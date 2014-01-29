@@ -88,6 +88,10 @@ NeoBundle "kana/vim-smartinput"
 inoremap <C-c> <Esc>
 inoremap jj <Esc>
 
+" <Esc><Esc>でハイライトを削除
+set hlsearch
+nmap <Esc><Esc> :nohlsearch<CR><Esc>
+
 " 挿入モードでのカーソル移動
 inoremap <C-j> <Down>
 inoremap <C-k> <Up>
@@ -428,3 +432,7 @@ set encoding=utf-8
 "     unlet s:enc_euc
 "     unlet s:enc_jis
 " endif
+"
+"末尾に改行入れないように
+set binary
+set noeol
