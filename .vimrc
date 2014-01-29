@@ -14,6 +14,12 @@ NeoBundle "YankRing.vim"
 NeoBundle 'molokai'
 NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
 
+NeoBundle 'taichouchou2/html5.vim' " HTML5シンタックス
+NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
+
+"あそび
+NeoBundle "deris/vim-duzzle"
+
 "補完のためのいろいろ
 NeoBundle 'Shougo/neocomplcache'
 NeoBundle 'Shougo/neocomplcache-rsense'
@@ -45,8 +51,18 @@ NeoBundle 'Shougo/vimproc', {
             \        'mac': 'make -f make_mac.mak'
             \     }
             \   }
-"ys\で かこえるやつ
+"S" ysw"とかでかこえるやつ
 NeoBundle 'tpope/vim-surround.git'
+
+
+if (isdirectory(expand('$GOROOT')))
+	NeoBundle 'go', {'type' : 'nosync'}
+endif
+
+" *.goはGoで開く
+autocmd BufNewFile,BufRead *.go setlocal filetype=go
+" Go編集時はタブにする
+autocmd FileType go setlocal tabstop=2 shiftwidth=2"
 
 " APIのドキュメントを参照する
 " Shift+K
@@ -67,7 +83,6 @@ NeoBundleLazy 'edsono/vim-matchit', { 'autoload' : {
 
 " 括弧なんてめんどくさい
 NeoBundle "kana/vim-smartinput"
-
 
 " C-cでEsc
 inoremap <C-c> <Esc>
@@ -317,6 +332,7 @@ let g:neocomplcache_dictionary_filetype_lists = {
             \ 'ruby'     : $HOME . '/dotfiles/dict/ruby.dict',
             \ 'scheme'   : $HOME.'/.gosh_completions'
             \ }
+
 
 "------------------------------------------------------------
 " Mappings {{{1

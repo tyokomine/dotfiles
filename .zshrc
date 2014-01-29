@@ -46,9 +46,10 @@ case "$OSTYPE" in
 darwin*)
 # "o"でopen
 alias o="open"
+alias iw="iqube --w --api_key=641a08fda3af4d2b535e4c363dcdfc26403522be/zCsWR3"
 alias i="iqube --api_key=641a08fda3af4d2b535e4c363dcdfc26403522be/zCsWR3"
-alias iw="iqube -w --api_key=641a08fda3af4d2b535e4c363dcdfc26403522be/zCsWR3"
 export PATH=$PATH:/usr/local/share/npm/bin
+export GOROOT=/usr/local/Cellar/go/1.1.1
 #rbenv setting
 eval "$(rbenv init -)"
 
@@ -69,5 +70,9 @@ case "$OSTYPE" in
 	 # ssh-add ~/.ssh/id_dsa
  	 ;;
 esac
+
 # ランダムな色のリンゴマークを出すよ！！
 PROMPT=$'%{\e[$[32+$RANDOM % 5]m%}%{$fg_bold[green]%}%p %{$fg[cyan]%}%c %{$fg_bold[blue]%}$(git_prompt_info)%{$fg_bold[blue]%} % %{$reset_color%}'
+
+#バイナリ開いちゃったよ！そんな時はbclear
+alias bclear="echo -e '\026\033c'"
