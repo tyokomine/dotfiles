@@ -17,6 +17,9 @@ NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 NeoBundle 'taichouchou2/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
 
+NeoBundle 'Yggdroot/indentLine'
+
+set list listchars=tab:\¦\ 
 "あそび
 NeoBundle "deris/vim-duzzle"
 
@@ -39,6 +42,7 @@ smap <C-k> <Plug>(neosnippet_expand_or_jump)
 imap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
 smap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
+
 " For snippet_complete marker.
 "if has('conceal') set conceallevel=2 concealcursor=i
 "endif
@@ -56,7 +60,7 @@ NeoBundle 'tpope/vim-surround.git'
 
 
 if (isdirectory(expand('$GOROOT')))
-	NeoBundle 'go', {'type' : 'nosync'}
+	" NeoBundle 'go', {'type' : 'nosync'}
 endif
 
 " *.goはGoで開く
@@ -127,8 +131,12 @@ endif
 NeoBundle 'ujihisa/neco-look.git'
 
 "ステータスラインをかっこよく
-NeoBundle 'Lokaltog/vim-powerline.git'
-let g:Powerline_symbols='fancy'
+NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+NeoBundle 'alpaca-tc/alpaca_powertabline'
+
+let g:Powerline_symbols = 'fancy'
+let g:Powerline_symbols = 'compatible'
+set t_Co=256
 " Vi互換モードをオフ（Vimの拡張機能を有効）
 set nocompatible
 "set cursorline 
