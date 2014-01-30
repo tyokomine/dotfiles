@@ -14,6 +14,10 @@ NeoBundle "YankRing.vim"
 NeoBundle 'molokai'
 NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
 
+" ctagのやつ
+NeoBundle 'soramugi/auto-ctags.vim'
+let g:auto_ctags = 1
+
 NeoBundle 'taichouchou2/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
 
