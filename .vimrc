@@ -35,7 +35,7 @@ NeoBundle 'Shougo/neocomplcache-rsense'
 NeoBundle 'Shougo/neosnippet'
 " NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
-colorscheme radicalgoodspeed
+" colorscheme radicalgoodspeed
 " <TAB>: completion.                                         
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"   
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>" 
