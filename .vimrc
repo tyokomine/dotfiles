@@ -14,6 +14,8 @@ NeoBundle "YankRing.vim"
 NeoBundle 'molokai'
 NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
 
+NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
+
 " ctagのやつ
 NeoBundle 'soramugi/auto-ctags.vim'
 let g:auto_ctags = 1
@@ -33,7 +35,7 @@ NeoBundle 'Shougo/neocomplcache-rsense'
 NeoBundle 'Shougo/neosnippet'
 " NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
-"colorscheme molokai
+colorscheme radicalgoodspeed
 " <TAB>: completion.                                         
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"   
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>" 
