@@ -47,7 +47,7 @@
   # comit
   ad  = add
   c   = commit
-  ci  = commit
+  ci  = commit -v
   ca  = commit -a           # modifiedなファイルを全てstageへ
   cam = commit -a --amend   # 直前のcommitを修正
   co  = checkout
