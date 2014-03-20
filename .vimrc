@@ -13,6 +13,12 @@ NeoBundle 'tomtom/tcomment_vim'
 NeoBundle "YankRing.vim"
 NeoBundle 'molokai'
 NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
+NeoBundle 'slim-template/vim-slim.git'
+NeoBundle 'rhysd/accelerated-jk'
+nmap j <Plug>(accelerated_jk_gj)
+nmap k <Plug>(accelerated_jk_gk)
+set lazyredraw
+set ttyfast
 
 NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
 
