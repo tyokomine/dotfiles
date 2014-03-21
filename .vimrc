@@ -129,8 +129,7 @@ endfunction
 nnoremap <silent><Space>. :<C-u>CD<CR>
 
 "vimでzencoding
-NeoBundle 'https://github.com/mattn/zencoding-vim.git'
-let g:use_zen_complete_tag = 1
+NeoBundle 'mattn/emmet-vim'
 
 "つにunite.vim
 NeoBundle 'Shougo/unite.vim'
@@ -174,8 +173,9 @@ NeoBundle 'kchmck/vim-coffee-script'
 "" vim-coffee-script
 "------------------------------------
 "" 保存時にコンパイル
-" autocmd BufWritePost *.coffee silent CoffeeMake! -cb | cwindow | redraw!
-
+" autocmd BufWritePost *.coffee silent CoffeeMake -cb | cwindow | redraw!
+autocmd BufWritePost *.coffee silent make! -cb
+ 
 " ビジュアルモードで選択した部分を置換
 vnoremap g/ y:<C-u>%s/<C-R>"//gc<Left><Left><Left>
 
