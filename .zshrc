@@ -46,8 +46,7 @@ case "$OSTYPE" in
 darwin*)
 # "o"でopen
 alias o="open"
-alias iw="iqube --w --api_key=641a08fda3af4d2b535e4c363dcdfc26403522be/zCsWR3"
-alias i="iqube --api_key=641a08fda3af4d2b535e4c363dcdfc26403522be/zCsWR3"
+alias be="bundle exec"
 export PATH=$PATH:/usr/local/share/npm/bin
 export GOROOT=/usr/local/Cellar/go/1.1.1
 #rbenv setting

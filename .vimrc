@@ -22,6 +22,15 @@ set ttyfast
 
 NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
 
+" rails用のいろいろ
+NeoBundle 'tpope/vim-rails.git'
+autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
+
+"tree
+NeoBundle 'scrooloose/nerdtree.git'
+autocmd vimenter * NERDTree 
+
+
 " ctagのやつ
 NeoBundle 'soramugi/auto-ctags.vim'
 let g:auto_ctags = 1
@@ -142,11 +151,16 @@ endif
 NeoBundle 'ujihisa/neco-look.git'
 
 "ステータスラインをかっこよく
-NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+" NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+NeoBundle 'itchyny/lightline.vim'
 NeoBundle 'alpaca-tc/alpaca_powertabline'
 
-let g:Powerline_symbols = 'fancy'
-let g:Powerline_symbols = 'compatible'
+let g:lightline = {
+			\ 'colorscheme': 'landscape',
+			\ 'separator': { 'left': '⮀', 'right': '⮂' },
+			\ 'subseparator': { 'left': '⮁', 'right': '⮃' }
+			\ }
+
 set t_Co=256
 " Vi互換モードをオフ（Vimの拡張機能を有効）
 set nocompatible

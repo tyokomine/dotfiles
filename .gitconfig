@@ -12,7 +12,7 @@
   interactive = auto
   grep = auto
 [core]
-	excludesfile = /Users/tatsukiyokomine/.gitignore
+  excludesfile = /Users/yokominetatsuki/.gitignore
   ; autocrlf = input                 # CRLFを自動変換
   editor = vim
   quotepath = false
