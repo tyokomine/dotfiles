@@ -28,7 +28,7 @@ autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
 
 "tree
 NeoBundle 'scrooloose/nerdtree.git'
-autocmd vimenter * NERDTree 
+autocmd vimenter * if !argc() | NERDTree | endif
 
 
 " ctagのやつ
