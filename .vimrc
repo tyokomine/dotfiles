@@ -26,10 +26,61 @@ NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
 NeoBundle 'tpope/vim-rails.git'
 autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
 
+let g:quickrun_config = {}
+let g:quickrun_config._ = {'runner' : 'vimproc'}
+let g:quickrun_config['ruby.rspec'] = {'command': 'rspec' , 'cmdopt': 'bundle exec', 'exec': '%o %c %s' ,'filetype': 'rspec-result'}
+augroup UjihisaRSpec
+	autocmd!
+	autocmd BufWinEnter,BufNewFile *_spec.rb set filetype=ruby.rspec
+augroup END
+
 "tree
 NeoBundle 'scrooloose/nerdtree.git'
 autocmd vimenter * if !argc() | NERDTree | endif
+" 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 
+" gist用
+NeoBundle 'mattn/gist-vim'
+NeoBundle 'mattn/webapi-vim'
+
+" markdowon
+NeoBundle 'vim-scripts/vim-auto-save'
+NeoBundle 'tyru/open-browser.vim'
+NeoBundle 'kannokanno/previm'
+NeoBundle 'syui/cscroll.vim'
+NeoBundle 'kana/vim-submode'
+
+" Markdown Preview
+" <F7>でプレビュー
+nnoremap <silent> <C-r> :PrevimOpen<CR>
+ 
+" プレビューと同時にフォーカスをiTerm2に戻したければ､以下を参考にします """{{{
+" ただし、注意として､「command -bar PrevimOpen...」のように「-bar」オプションを付ける必要があります。
+" http://mba-hack.blogspot.jp/2013/09/mac.html
+" nnoremap <silent> <F7> :PrevimOpen \|:silent !open -a it2_f<CR>
+"""}}}
+ 
+augroup PrevimSettings
+	autocmd!
+	autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
+augroup END
+
+" [,]+j+j+j...で下にスクロール、[,]+k+k+k...で上にスクロール
+nnoremap <silent> <Leader>j :ChromeScrollDown<CR>
+nnoremap <silent> <Leader>k :ChromeScrollUp<CR>
+call submode#enter_with('cscroll', 'n', '', '<Leader>j', ':ChromeScrollDown<CR>')
+call submode#enter_with('cscroll', 'n', '', '<Leader>k', ':ChromeScrollUp<CR>')
+call submode#leave_with('cscroll', 'n', '', 'n')
+call submode#map('cscroll', 'n', '', 'j', ':ChromeScrollDown<CR>')
+call submode#map('cscroll', 'n', '', 'k', ':ChromeScrollUp<CR>')
+ 
+" 現在のタブを閉じる
+nnoremap <silent> <Leader>q :ChromeTabClose<CR>
+" [,]+f+{char}でキーを Google Chrome に送る
+" nnoremap <buffer> <Leader>f :ChromeKey<Space>
+
+NeoBundle 'tell-k/vim-browsereload-mac'
 
 " ctagのやつ
 NeoBundle 'soramugi/auto-ctags.vim'
