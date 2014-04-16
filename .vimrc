@@ -44,12 +44,13 @@ autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTree
 NeoBundle 'mattn/gist-vim'
 NeoBundle 'mattn/webapi-vim'
 
+" githubにすぐに
+NeoBundle 'tyru/open-browser-github.vim'
+
 " markdowon
 NeoBundle 'vim-scripts/vim-auto-save'
 NeoBundle 'tyru/open-browser.vim'
 NeoBundle 'kannokanno/previm'
-NeoBundle 'syui/cscroll.vim'
-NeoBundle 'kana/vim-submode'
 
 " Markdown Preview
 " <F7>でプレビュー
@@ -65,15 +66,6 @@ augroup PrevimSettings
 	autocmd!
 	autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
 augroup END
-
-" [,]+j+j+j...で下にスクロール、[,]+k+k+k...で上にスクロール
-nnoremap <silent> <Leader>j :ChromeScrollDown<CR>
-nnoremap <silent> <Leader>k :ChromeScrollUp<CR>
-call submode#enter_with('cscroll', 'n', '', '<Leader>j', ':ChromeScrollDown<CR>')
-call submode#enter_with('cscroll', 'n', '', '<Leader>k', ':ChromeScrollUp<CR>')
-call submode#leave_with('cscroll', 'n', '', 'n')
-call submode#map('cscroll', 'n', '', 'j', ':ChromeScrollDown<CR>')
-call submode#map('cscroll', 'n', '', 'k', ':ChromeScrollUp<CR>')
  
 " 現在のタブを閉じる
 nnoremap <silent> <Leader>q :ChromeTabClose<CR>
