@@ -44,6 +44,9 @@ autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTree
 NeoBundle 'mattn/gist-vim'
 NeoBundle 'mattn/webapi-vim'
 
+" vimでgit
+NeoBundle 'tpope/vim-fugitive'
+
 " githubにすぐに
 NeoBundle 'tyru/open-browser-github.vim'
 
