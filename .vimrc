@@ -57,7 +57,7 @@ NeoBundle 'kannokanno/previm'
 
 " Markdown Preview
 " <F7>でプレビュー
-nnoremap <silent> <C-r> :PrevimOpen<CR>
+" nnoremap <silent> <C-r> :PrevimOpen<CR>
  
 " プレビューと同時にフォーカスをiTerm2に戻したければ､以下を参考にします """{{{
 " ただし、注意として､「command -bar PrevimOpen...」のように「-bar」オプションを付ける必要があります。
@@ -81,9 +81,8 @@ NeoBundle 'tell-k/vim-browsereload-mac'
 NeoBundle 'soramugi/auto-ctags.vim'
 let g:auto_ctags = 1
 
-NeoBundle 'taichouchou2/html5.vim' " HTML5シンタックス
+NeoBundle 'othree/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
-
 NeoBundle 'Yggdroot/indentLine'
 
 set list listchars=tab:\¦\ 
