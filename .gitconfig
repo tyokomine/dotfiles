@@ -65,6 +65,7 @@
   bo  = branch -r           # remote branchを表示
   # log関連
   edit-unmerged = "!f() { git ls-files --unmerged | cut -f2 | sort -u ; }; vim `f`"
+	delete-merged-branches = !git branch --merged | grep -v \\* | xargs -I % git branch -d %
   wc  = whatchanged         # logに変更されたファイルも一緒に出す
   ls  = log --stat          # logに変更されたファイルも一緒に出す
   lp  = log -p              # diffも一緒に出す

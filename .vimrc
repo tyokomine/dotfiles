@@ -12,7 +12,7 @@ NeoBundle 'Lokaltog/vim-easymotion'
 NeoBundle 'tomtom/tcomment_vim'
 NeoBundle "YankRing.vim"
 NeoBundle 'molokai'
-NeoBundle 'https://github.com/thinca/vim-quickrun.git' 
+NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 NeoBundle 'slim-template/vim-slim.git'
 NeoBundle 'rhysd/accelerated-jk'
 nmap j <Plug>(accelerated_jk_gj)
@@ -40,12 +40,21 @@ autocmd vimenter * if !argc() | NERDTree | endif
 " 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 
+" 行末の半角スペースを可視化
+NeoBundle 'bronson/vim-trailing-whitespace'
+
 " gist用
 NeoBundle 'mattn/gist-vim'
 NeoBundle 'mattn/webapi-vim'
 
 " vimでgit
 NeoBundle 'tpope/vim-fugitive'
+
+" grep検索の実行後にQuickFix Listを表示する
+autocmd QuickFixCmdPost *grep* cwindow
+
+" ステータス行に現在のgitブランチを表示する
+set statusline+=%{fugitive#statusline()}
 
 " githubにすぐに
 NeoBundle 'tyru/open-browser-github.vim'
@@ -58,18 +67,18 @@ NeoBundle 'kannokanno/previm'
 " Markdown Preview
 " <F7>でプレビュー
 " nnoremap <silent> <C-r> :PrevimOpen<CR>
- 
+
 " プレビューと同時にフォーカスをiTerm2に戻したければ､以下を参考にします """{{{
 " ただし、注意として､「command -bar PrevimOpen...」のように「-bar」オプションを付ける必要があります。
 " http://mba-hack.blogspot.jp/2013/09/mac.html
 " nnoremap <silent> <F7> :PrevimOpen \|:silent !open -a it2_f<CR>
 """}}}
- 
+
 augroup PrevimSettings
 	autocmd!
 	autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
 augroup END
- 
+
 " 現在のタブを閉じる
 nnoremap <silent> <Leader>q :ChromeTabClose<CR>
 " [,]+f+{char}でキーを Google Chrome に送る
@@ -85,7 +94,7 @@ NeoBundle 'othree/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
 NeoBundle 'Yggdroot/indentLine'
 
-set list listchars=tab:\¦\ 
+set list listchars=tab:\¦\
 "あそび
 NeoBundle "deris/vim-duzzle"
 
@@ -96,9 +105,9 @@ NeoBundle 'Shougo/neosnippet'
 " NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
 " colorscheme radicalgoodspeed
-" <TAB>: completion.                                         
-inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"   
-inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>" 
+" <TAB>: completion.
+inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
 
 " Plugin key-mappings.
 imap <C-k> <Plug>(neosnippet_expand_or_jump)
@@ -209,7 +218,7 @@ let g:lightline = {
 set t_Co=256
 " Vi互換モードをオフ（Vimの拡張機能を有効）
 set nocompatible
-"set cursorline 
+"set cursorline
 "set t_Co=256
 highlight cursorline term=reverse cterm=reverse ctermbg=256
 " ファイル名と内容によってファイルタイプを判別し、ファイルタイププラグインを有効にする
@@ -234,7 +243,7 @@ NeoBundle 'kchmck/vim-coffee-script'
 "" 保存時にコンパイル
 " autocmd BufWritePost *.coffee silent CoffeeMake -cb | cwindow | redraw!
 autocmd BufWritePost *.coffee silent make! -cb
- 
+
 " ビジュアルモードで選択した部分を置換
 vnoremap g/ y:<C-u>%s/<C-R>"//gc<Left><Left><Left>
 
@@ -317,7 +326,7 @@ set pastetoggle=<F11>
 " set shiftwidth=4
 " set softtabstop=2
 " set expandtab
-" 
+"
 " インデントにハードタブを使う場合の設定。
 " タブ文字を2文字分の幅で表示する。
 set shiftwidth=2
@@ -379,13 +388,13 @@ map <silent> [Tag]p :tabprevious<CR>
 "     autocmd!
 "     autocmd BufWrite *.rb w !ruby -c
 " augroup END
-" 
+"
 " " php
 " augroup phpsyntaxcheck
 "     autocmd!
 "     autocmd BufWrite *.php w !php -l
 " augroup END
-" 
+"
 " " coffee
 " augroup coffeesyntaxcheck
 "     autocmd!
@@ -469,7 +478,7 @@ endfunction
 "------------------------------------------------------------
 set fileencodings=ucs-bom,utf-8,iso-2022-jp,sjis,cp932,euc-jp,cp20932
 set encoding=utf-8
-" 
+"
 " if &encoding !=# 'utf-8'
 "     set encoding=japan
 "     set fileencoding=japan
