@@ -84,6 +84,9 @@ nnoremap <silent> <Leader>q :ChromeTabClose<CR>
 " [,]+f+{char}でキーを Google Chrome に送る
 " nnoremap <buffer> <Leader>f :ChromeKey<Space>
 
+" クリップボード共有
+set clipboard=unnamed
+
 NeoBundle 'tell-k/vim-browsereload-mac'
 
 " ctagのやつ
@@ -94,7 +97,7 @@ NeoBundle 'othree/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
 NeoBundle 'Yggdroot/indentLine'
 
-set list listchars=tab:\¦\
+set list listchars=tab:\¦\ 
 "あそび
 NeoBundle "deris/vim-duzzle"
 
@@ -117,6 +120,8 @@ smap <C-k> <Plug>(neosnippet_expand_or_jump)
 imap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
 smap <expr><TAB> neosnippet#jumpable() ?"\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
+" 補完に表示する行数を指定
+set pumheight=10
 
 " For snippet_complete marker.
 "if has('conceal') set conceallevel=2 concealcursor=i
@@ -146,9 +151,15 @@ autocmd FileType go setlocal tabstop=2 shiftwidth=2"
 " APIのドキュメントを参照する
 " Shift+K
 NeoBundle 'thinca/vim-ref'
+NeoBundle 'yuku-t/vim-ref-ri'
 let g:ref_open = 'vsplit'
-let g:ref_refe_cmd = "rurema"
-let g:ref_refe_version = 2
+
+" rrですぐコマンド
+nnoremap rr :<C-U>Ref refe 
+
+aug MyAutoCmd
+	au FileType ruby,eruby,ruby.rspec nnoremap <silent><buffer>K :<C-U>Ref refe <C-R><C-W><CR>
+aug END
 
 " endを自動挿入
 NeoBundleLazy 'alpaca-tc/vim-endwise.git', {
@@ -242,7 +253,7 @@ NeoBundle 'kchmck/vim-coffee-script'
 "------------------------------------
 "" 保存時にコンパイル
 " autocmd BufWritePost *.coffee silent CoffeeMake -cb | cwindow | redraw!
-autocmd BufWritePost *.coffee silent make! -cb
+" autocmd BufWritePost *.coffee silent make! -cb
 
 " ビジュアルモードで選択した部分を置換
 vnoremap g/ y:<C-u>%s/<C-R>"//gc<Left><Left><Left>
@@ -316,6 +327,8 @@ set notimeout ttimeout ttimeoutlen=200
 " <F11>キーで'paste'と'nopaste'を切り替える
 set pastetoggle=<F11>
 
+" 長い行もちゃんと表示
+set display=lastline
 
 "------------------------------------------------------------
 " Indentation options {{{1

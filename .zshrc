@@ -48,6 +48,7 @@ darwin*)
 alias o="open"
 alias be="bundle exec"
 export PATH=$PATH:/usr/local/share/npm/bin
+export PATH=/usr/local/sbin:$PATH
 export GOROOT=/usr/local/Cellar/go/1.1.1
 #rbenv setting
 eval "$(rbenv init -)"
@@ -75,3 +76,33 @@ PROMPT=$'%{\e[$[32+$RANDOM % 5]m%}%{$fg_bold[green]%}%p %{$fg[cyan]%}%c %{$fg
 
 #バイナリ開いちゃったよ！そんな時はbclear
 alias bclear="echo -e '\026\033c'"
+
+#楽ちん検索
+function agvim () {
+  vim $(ag $@ | peco --query "$LBUFFER" | awk -F : '{print "-c " $2 " " $1}')
+}
+
+### s[Enter]でssh
+alias s='ssh $(grep -iE "^host[[:space:]]+[^*]" ~/.ssh/config|peco|awk "{print \$2}")'
+
+#### branch絞り込んでcheckout
+alias copeco='git checkout `git branch | peco | sed -e "s/\* //g" | awk "{print \$1}"`'
+[[ -s /Users/yokominetatsuki/.tmuxinator/scripts/tmuxinator ]] && source /Users/yokominetatsuki/.tmuxinator/scripts/tmuxinator
+export EDITOR=/usr/bin/vim
+alias pong='perl -nle '\''print "display notification \"$_\" with title \"Terminal\""'\'' | osascript'
+
+function peco-select-history() {
+	local tac
+	if which tac > /dev/null; then
+		tac="tac"
+	else
+		tac="tail -r"
+	fi
+	BUFFER=$(\history -n 1 | \
+		eval $tac | \
+		peco --query "$LBUFFER")
+	CURSOR=$#BUFFER
+	zle clear-screen
+}
+zle -N peco-select-history
+bindkey '^e' peco-select-history

@@ -33,6 +33,7 @@
   pod = push origin develop # push origin develop
   pof = push -f origin      # force
   pu  = push -u origin      # push origin and set upstream
+  uom = pull origin master
   # rebase
   rbm = rebase master       # masterへのrebaseはよく使うのでalias
   rbd = rebase develop
@@ -96,6 +97,7 @@
   dw = diff --color-words    # 単語単位でいろつけてdiff
   dc = diff --cached         # addされているものとのdiff
   ds = diff --staged         # 同上(1.6.1移行)
+  dh = diff HEAD             # HEADからのdiff
   d1 = diff HEAD~            # HEADから1つ前とdiff
   d2 = diff HEAD~~           # HEADから2つ前とdiff
   d3 = diff HEAD~~~          # HEADから3つ前とdiff
