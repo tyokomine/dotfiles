@@ -11,7 +11,6 @@ NeoBundle 'thinca/vim-visualstar'
 NeoBundle 'Lokaltog/vim-easymotion'
 NeoBundle 'tomtom/tcomment_vim'
 NeoBundle "YankRing.vim"
-NeoBundle 'molokai'
 NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 NeoBundle 'slim-template/vim-slim.git'
 NeoBundle 'rhysd/accelerated-jk'
@@ -107,6 +106,13 @@ NeoBundle 'Shougo/neosnippet'
 " NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
 "colorscheme radicalgoodspeed
+NeoBundle 'jonathanfilip/vim-lucius'
+" colorscheme lucius
+NeoBundle 'w0ng/vim-hybrid'
+set background=dark
+" let g:hybrid_custom_term_colors = 1
+let g:hybrid_reduced_contrast = 1 " Remove this line if using the default palette."
+colorscheme hybrid
 " <TAB>: completion.
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -199,7 +205,7 @@ function! s:ChangeCurrentDir(directory, bang)
 		pwd
 	endif
 endfunction
-nnoremap <silent><Space>. :<C-u>CD<CR>
+" nnoremap <silent><Space>. :<C-u>CD<CR>
 
 "vimでzencoding
 NeoBundle 'mattn/emmet-vim'
@@ -292,7 +298,6 @@ set backspace=indent,eol,start
 " オートインデント
 set autoindent
 
-colorscheme default
 NeoBundle 'Yggdroot/indentLine'
 set list listchars=tab:\¦\ 
 
@@ -340,21 +345,21 @@ set pastetoggle=<F11>
 set display=lastline
 
 " 認識されないっぽいファイルタイプを追加
-au BufNewFile,BufRead *.psgi       set filetype=perl
-au BufNewFile,BufRead *.t          set filetype=perl
-au BufNewFile,BufRead *.ejs        set filetype=html
-au BufNewFile,BufRead *.ep         set filetype=html
-au BufNewFile,BufRead *.pde        set filetype=processing
-au BufNewFile,BufRead *.erb        set filetype=eruby
-au BufNewFile,BufRead *.tt         set filetype=html
-au BufNewFile,BufRead *.tx         set filetype=html
-au BufNewFile,BufRead *.tt2        set filetype=html
-au BufNewFile,BufRead *.scss       set filetype=css
-au BufNewFile,BufRead Guardfile    set filetype=ruby
-au BufNewFile,BufRead Vagrantfile  set filetype=ruby
-au BufNewFile,BufRead cpanfile     set filetype=perl
-au BufRead, BufNewFile jquery.*.js set ft=javascript syntax=jquery
-au BufNewFile,BufRead *.es6        set filetype=javascript
+" au BufNewFile,BufRead *.psgi       set filetype=perl
+" au BufNewFile,BufRead *.t          set filetype=perl
+" au BufNewFile,BufRead *.ejs        set filetype=html
+" au BufNewFile,BufRead *.ep         set filetype=html
+" au BufNewFile,BufRead *.pde        set filetype=processing
+" au BufNewFile,BufRead *.erb        set filetype=eruby
+" au BufNewFile,BufRead *.tt         set filetype=html
+" au BufNewFile,BufRead *.tx         set filetype=html
+" au BufNewFile,BufRead *.tt2        set filetype=html
+" au BufNewFile,BufRead *.scss       set filetype=css
+" au BufNewFile,BufRead Guardfile    set filetype=ruby
+" au BufNewFile,BufRead Vagrantfile  set filetype=ruby
+" au BufNewFile,BufRead cpanfile     set filetype=perl
+" au BufRead, BufNewFile jquery.*.js set ft=javascript syntax=jquery
+" au BufNewFile,BufRead *.es6        set filetype=javascript
 "------------------------------------------------------------
 " Indentation options {{{1
 " インデント関連のオプション {{{1
