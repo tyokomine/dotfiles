@@ -24,7 +24,8 @@ NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
 
 " rails用のいろいろ
 NeoBundle 'tpope/vim-rails.git'
-autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
+
+" autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
 
 let g:quickrun_config = {}
 let g:quickrun_config._ = {'runner' : 'vimproc'}
@@ -95,9 +96,7 @@ let g:auto_ctags = 1
 
 NeoBundle 'othree/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
-NeoBundle 'Yggdroot/indentLine'
 
-set list listchars=tab:\¦\ 
 "あそび
 NeoBundle "deris/vim-duzzle"
 
@@ -107,7 +106,7 @@ NeoBundle 'Shougo/neocomplcache-rsense'
 NeoBundle 'Shougo/neosnippet'
 " NeoBundle 'honza/snipmate-snippets.git'
 NeoBundle 'skwp/vim-rspec'
-" colorscheme radicalgoodspeed
+"colorscheme radicalgoodspeed
 " <TAB>: completion.
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -293,6 +292,16 @@ set backspace=indent,eol,start
 " オートインデント
 set autoindent
 
+colorscheme default
+NeoBundle 'Yggdroot/indentLine'
+set list listchars=tab:\¦\ 
+
+" slimのときのファイルの設定
+ au BufNewFile,BufRead *.slim set noexpandtab tabstop=4 shiftwidth=4
+
+" sassのときのファイルの設定
+ au BufNewFile,BufRead *.sass set noexpandtab tabstop=4 shiftwidth=4
+
 " 移動コマンドを使ったとき、行頭に移動しない
 set nostartofline
 
@@ -330,6 +339,22 @@ set pastetoggle=<F11>
 " 長い行もちゃんと表示
 set display=lastline
 
+" 認識されないっぽいファイルタイプを追加
+au BufNewFile,BufRead *.psgi       set filetype=perl
+au BufNewFile,BufRead *.t          set filetype=perl
+au BufNewFile,BufRead *.ejs        set filetype=html
+au BufNewFile,BufRead *.ep         set filetype=html
+au BufNewFile,BufRead *.pde        set filetype=processing
+au BufNewFile,BufRead *.erb        set filetype=eruby
+au BufNewFile,BufRead *.tt         set filetype=html
+au BufNewFile,BufRead *.tx         set filetype=html
+au BufNewFile,BufRead *.tt2        set filetype=html
+au BufNewFile,BufRead *.scss       set filetype=css
+au BufNewFile,BufRead Guardfile    set filetype=ruby
+au BufNewFile,BufRead Vagrantfile  set filetype=ruby
+au BufNewFile,BufRead cpanfile     set filetype=perl
+au BufRead, BufNewFile jquery.*.js set ft=javascript syntax=jquery
+au BufNewFile,BufRead *.es6        set filetype=javascript
 "------------------------------------------------------------
 " Indentation options {{{1
 " インデント関連のオプション {{{1
@@ -337,14 +362,42 @@ set display=lastline
 " タブ文字の代わりにスペース2個を使う場合の設定。
 " この場合、'tabstop'はデフォルトの8から変えない。
 " set shiftwidth=4
-" set softtabstop=2
+" set tabstop=4
 " set expandtab
-"
-" インデントにハードタブを使う場合の設定。
 " タブ文字を2文字分の幅で表示する。
 set shiftwidth=2
 set tabstop=2
 
+
+" autocmd FileType apache     setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType aspvbs     setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType c          setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType cpp        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType cs         setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType css        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType diff       setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType eruby      setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType html       setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType java       setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType javascript setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType perl       setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType php        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType python     setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType ruby       setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType haml       setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType sh         setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType sql        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType vb         setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType vim        setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType wsh        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType xhtml      setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType xml        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType yaml       setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType zsh        setlocal sw=4 sts=4 ts=4 et
+" autocmd FileType scala      setlocal sw=2 sts=2 ts=2 et
+" autocmd FileType scheme     setlocal sw=2 sts=2 ts=2 et
+"
 
 " タブ関連の設定
 function! s:SID_PREFIX()
@@ -537,3 +590,5 @@ set encoding=utf-8
 "末尾に改行入れないように
 set binary
 set noeol
+
+
