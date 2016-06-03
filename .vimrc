@@ -36,9 +36,13 @@ augroup END
 
 "tree
 NeoBundle 'scrooloose/nerdtree.git'
-autocmd vimenter * if !argc() | NERDTree | endif
+autocmd vimenter *  NERDTree
+" 引数つきでvim開いたときはそのファイルに移動
+autocmd vimenter * if argc() | wincmd p | endif
 " 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+let g:NERDTreeWinPos="right"
+let g:NERDTreeMouseMode=3
 
 " 行末の半角スペースを可視化
 NeoBundle 'bronson/vim-trailing-whitespace'
@@ -437,12 +441,12 @@ for n in range(1, 9)
 endfor
 " t1 で1番左のタブ、t2 で1番左から2番目のタブにジャンプ
 
-map <silent> [Tag]c :tablast <bar> tabnew<CR>
-" tc 新しいタブを一番右に作る
-map <silent> [Tag]x :tabclose<CR>
+" tc 新しいタブを一番右に作る、ついでにnerdtreeを常に
+map <silent> [Tag]c :tablast <bar> tabnew<bar> NERDTree <CR>
 " tx タブを閉じる
-map <silent> [Tag]n :tabnext<CR>
+map <silent> [Tag]x :tabclose<CR>
 " tn 次のタブ
+map <silent> [Tag]n :tabnext<CR>
 map <silent> [Tag]p :tabprevious<CR>
 
 "--------------------------------------------------------------
