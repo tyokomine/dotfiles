@@ -298,21 +298,6 @@ set backspace=indent,eol,start
 " オートインデント
 set autoindent
 
-NeoBundle 'Yggdroot/indentLine'
-" set list listchars=tab:\¦\ 
-autocmd BufRead * :IndentLinesEnable
-" なぜかinsertModeに入るタイミングで消えることがあるのでReset
-autocmd InsertEnter * :IndentLinesReset
-
-" autocmd BufNewFile,BufRead * set indentLine_enabled=1
-" let g:indentLine_conceallevel=1
-
-" slimのときのファイルの設定
-"  au BufNewFile,BufRead *.slim set noexpandtab tabstop=4 shiftwidth=4
-
-" sassのときのファイルの設定
-"  au BufNewFile,BufRead *.sass set noexpandtab tabstop=4 shiftwidth=4
-
 " 移動コマンドを使ったとき、行頭に移動しない
 set nostartofline
 
@@ -408,6 +393,12 @@ autocmd FileType yaml       setlocal sw=2 sts=2 ts=2 et
 autocmd FileType zsh        setlocal sw=4 sts=4 ts=4 et
 autocmd FileType scala      setlocal sw=2 sts=2 ts=2 et
 autocmd FileType scheme     setlocal sw=2 sts=2 ts=2 et
+
+NeoBundle 'Yggdroot/indentLine'
+" set list listchars=tab:\¦\ 
+autocmd BufRead * :IndentLinesEnable
+" なぜかinsertModeに入るタイミングで消えることがあるのでReset
+autocmd InsertEnter * :IndentLinesReset
 
 
 " タブ関連の設定
