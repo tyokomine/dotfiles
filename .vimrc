@@ -38,7 +38,7 @@ augroup END
 NeoBundle 'scrooloose/nerdtree.git'
 autocmd vimenter *  NERDTree
 " 引数つきでvim開いたときはそのファイルに移動
-autocmd vimenter * if argc() | wincmd p | NERDTreeFind | endif
+autocmd vimenter * if argc() | wincmd p | NERDTreeFind | wincmd p |  endif
 " 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 let g:NERDTreeWinPos="right"
