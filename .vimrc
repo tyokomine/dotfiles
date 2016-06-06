@@ -54,8 +54,9 @@ NeoBundle 'mattn/webapi-vim'
 " vimでgit
 NeoBundle 'tpope/vim-fugitive'
 
+" Quickfixウィンドウを最も左側に表示
 " grep検索の実行後にQuickFix Listを表示する
-autocmd QuickFixCmdPost *grep* cwindow
+autocmd QuickFixCmdPost *grep* lefta cwindow
 
 " ステータス行に現在のgitブランチを表示する
 set statusline+=%{fugitive#statusline()}
