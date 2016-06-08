@@ -399,9 +399,9 @@ autocmd FileType zsh        setlocal sw=4 sts=4 ts=4 et
 autocmd FileType scala      setlocal sw=2 sts=2 ts=2 et
 autocmd FileType scheme     setlocal sw=2 sts=2 ts=2 et
 
+
 NeoBundle 'Yggdroot/indentLine'
 " set list listchars=tab:\¦\ 
-let g:indentLine_faster = 1
 autocmd BufRead * :IndentLinesEnable
 " なぜかinsertModeに入るタイミングで消えることがあるのでReset
 autocmd InsertEnter * :IndentLinesReset
