@@ -10,7 +10,6 @@ NeoBundle 'Shougo/neobundle.vim'
 NeoBundle 'thinca/vim-visualstar'
 NeoBundle 'Lokaltog/vim-easymotion'
 NeoBundle 'tomtom/tcomment_vim'
-NeoBundle "YankRing.vim"
 NeoBundle 'https://github.com/thinca/vim-quickrun.git'
 NeoBundle 'slim-template/vim-slim.git'
 NeoBundle 'rhysd/accelerated-jk'
@@ -19,9 +18,16 @@ nmap k <Plug>(accelerated_jk_gk)
 set lazyredraw
 set ttyfast
 
-NeoBundle 'gh:svjunic/RadicalGoodSpeed.vim.git'
+NeoBundle 'LeafCage/yankround.vim'
+nmap p <Plug>(yankround-p)
+nmap P <Plug>(yankround-P)
+nmap gp <Plug>(yankround-gp)
+nmap gP <Plug>(yankround-gP)
+nmap <C-h> <Plug>(yankround-prev)
+nmap <C-n> <Plug>(yankround-next)
 
-" rails用のいろいろ
+
+" rails用のいろいろnmap <C-p> <Plug>(yankround-prev)
 NeoBundle 'tpope/vim-rails.git'
 
 " autocmd BufRead,BufNewFile *.erb set filetype=eruby.html
@@ -53,6 +59,8 @@ NeoBundle 'mattn/webapi-vim'
 
 " vimでgit
 NeoBundle 'tpope/vim-fugitive'
+" 変更あるところに記号
+NeoBundle 'airblade/vim-gitgutter'
 
 " Quickfixウィンドウを最も左側に表示
 " grep検索の実行後にQuickFix Listを表示する
@@ -184,6 +192,15 @@ NeoBundleLazy 'edsono/vim-matchit', { 'autoload' : {
 " 括弧なんてめんどくさい
 NeoBundle "kana/vim-smartinput"
 
+
+NeoBundle 'othree/yajs.vim'            " es6のハイライト
+NeoBundle 'othree/es.next.syntax.vim'  " stage-0 のsyntax highlight
+NeoBundle 'mxw/vim-jsx'                " jsxのハイライト
+
+" vim-jsx用の設定
+let g:jsx_ext_required = 1        " ファイルタイプがjsxのとき読み込む．
+let g:jsx_pragma_required = 0     " @から始まるプラグマでは読み込まない．"
+
 " C-cでEsc
 inoremap <C-c> <Esc>
 inoremap jj <Esc>
@@ -273,6 +290,8 @@ NeoBundle 'kien/ctrlp.vim.git'
 let g:ctrlp_custom_ignore = {
             \ 'dir':  '\v[\/]\.?(extlib|git|hg|svn)$',
             \ }
+
+NeoBundle 'elixir-lang/vim-elixir'
 
 " 強く推奨するオプション
 " バッファを保存しなくても他のバッファを表示できるようにする
