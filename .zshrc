@@ -50,8 +50,10 @@ alias be="bundle exec"
 export PATH=$PATH:/usr/local/share/npm/bin
 export PATH=/usr/local/sbin:$PATH
 export GOROOT=/usr/local/Cellar/go/1.1.1
+export PATH="$HOME/.exenv/bin:$PATH"
 #rbenv setting
 eval "$(rbenv init -)"
+eval "$(exenv init -)"
 
 ;;
 esac
@@ -105,7 +107,7 @@ function peco-select-history() {
 	zle clear-screen
 }
 zle -N peco-select-history
-bindkey '^e' peco-select-history
+bindkey '^g' peco-select-history
 alias ssh=/usr/local/bin/ssh-host-color
 
 function cdgem() {
@@ -116,3 +118,4 @@ if [ -n "$gem_name" ]; then
 	cd ${gem_dir}
 fi
 }
+
