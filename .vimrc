@@ -16,6 +16,7 @@ NeoBundle 'rhysd/accelerated-jk'
 nmap j <Plug>(accelerated_jk_gj)
 nmap k <Plug>(accelerated_jk_gk)
 set lazyredraw
+set redrawtime=500
 set ttyfast
 
 NeoBundle 'LeafCage/yankround.vim'
@@ -99,6 +100,8 @@ nnoremap <silent> <Leader>q :ChromeTabClose<CR>
 
 " クリップボード共有
 set clipboard=unnamed
+
+set ambiwidth=double " □や○文字が崩れる問題を解決"
 
 NeoBundle 'tell-k/vim-browsereload-mac'
 
@@ -275,6 +278,9 @@ nnoremap g/ :<C-u>%s/<C-R><C-w>//gc<Left><Left><Left>
 " syntax + 自動compile
 NeoBundle 'kchmck/vim-coffee-script'
 
+" sass
+NeoBundle 'AtsushiM/sass-compile.vim'
+
 "------------------------------------
 "" vim-coffee-script
 "------------------------------------
@@ -398,6 +404,7 @@ autocmd FileType css        setlocal sw=4 sts=4 ts=4 et
 autocmd FileType diff       setlocal sw=4 sts=4 ts=4 et
 autocmd FileType eruby      setlocal sw=4 sts=4 ts=4 et
 autocmd FileType html       setlocal sw=4 sts=4 ts=4 et
+autocmd FileType slim       setlocal sw=4 sts=4 ts=4 et
 autocmd FileType java       setlocal sw=4 sts=4 ts=4 et
 autocmd FileType javascript setlocal sw=4 sts=4 ts=4 et
 autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
@@ -417,6 +424,7 @@ autocmd FileType yaml       setlocal sw=2 sts=2 ts=2 et
 autocmd FileType zsh        setlocal sw=4 sts=4 ts=4 et
 autocmd FileType scala      setlocal sw=2 sts=2 ts=2 et
 autocmd FileType scheme     setlocal sw=2 sts=2 ts=2 et
+autocmd FileType less,sass  setlocal sw=2 sts=2 ts=2 et
 
 
 NeoBundle 'Yggdroot/indentLine'

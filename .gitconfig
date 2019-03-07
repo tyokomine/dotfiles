@@ -35,6 +35,7 @@
   pu  = push -u origin      # push origin and set upstream
   plo = pull origin
   plom = pull origin master
+  plod = pull origin develop
   # rebase
   rbm = rebase master       # masterへのrebaseはよく使うのでalias
   rbd = rebase develop
@@ -122,3 +123,5 @@
   smupdate = submodule foreach "git checkout master; git pull origin master"
 
   hist = log --pretty=format:\\\"%h %ad | %s%d [%an]\\\" --graph --date=short
+[diff]
+	compactionHeuristic = true
