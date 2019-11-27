@@ -4,7 +4,7 @@ filetype plugin indent off     " required!
 
 if has('vim_starting')
     set runtimepath+=~/.vim/bundle/neobundle.vim/
-    call neobundle#rc(expand('~/.vim/bundle/'))
+    call neobundle#begin(expand('~/.vim/bundle/'))
 endif
 NeoBundle 'Shougo/neobundle.vim'
 NeoBundle 'thinca/vim-visualstar'
@@ -47,7 +47,7 @@ autocmd vimenter *  NERDTree
 " 引数つきでvim開いたときはそのファイルに移動
 autocmd vimenter * if argc() | wincmd p | NERDTreeFind | wincmd p |  endif
 " 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
-autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 let g:NERDTreeWinPos="right"
 let g:NERDTreeMouseMode=3
 
@@ -88,6 +88,7 @@ NeoBundle 'kannokanno/previm'
 " nnoremap <silent> <F7> :PrevimOpen \|:silent !open -a it2_f<CR>
 """}}}
 
+" let g:previm_open_cmd = 'open -a GoogleChrome'
 augroup PrevimSettings
 	autocmd!
 	autocmd BufNewFile,BufRead *.{md,mdwn,mkd,mkdn,mark*} set filetype=markdown
@@ -107,7 +108,7 @@ NeoBundle 'tell-k/vim-browsereload-mac'
 
 " ctagのやつ
 NeoBundle 'soramugi/auto-ctags.vim'
-let g:auto_ctags = 1
+" let g:auto_ctags = 1
 
 " NeoBundle 'othree/html5.vim' " HTML5シンタックス
 NeoBundle 'hail2u/vim-css3-syntax' " CSS3シンタックス
@@ -626,4 +627,5 @@ set encoding=utf-8
 set binary
 set noeol
 
+call neobundle#end()
 

@@ -130,3 +130,4 @@ fi
 #   source '/Users/yokominetatsuki/Downloads/google-cloud-sdk/completion.zsh.inc'
 # fi
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
+export PKG_CONFIG_PATH=/usr/local/Cellar/imagemagick@6/6.9.10-27/lib/pkgconfig
