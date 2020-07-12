@@ -55,6 +55,11 @@ export PATH="$HOME/.exenv/bin:$PATH"
 eval "$(rbenv init -)"
 eval "$(exenv init -)"
 
+export PATH="$HOME/.ndenv/bin:$PATH"
+eval "$(ndenv init -)"
+
+# python
+export PATH=$HOME/Library/Python/2.7/bin:$PATH
 ;;
 esac
 
@@ -108,7 +113,6 @@ function peco-select-history() {
 }
 zle -N peco-select-history
 bindkey '^g' peco-select-history
-alias ssh=/usr/local/bin/ssh-host-color
 
 function cdgem() {
 local gem_name=$(bundle list | sed -e 's/^ *\* *//g' | peco | cut -d \  -f 1)
@@ -129,5 +133,5 @@ fi
 # if [ -f /Users/yokominetatsuki/Downloads/google-cloud-sdk/completion.zsh.inc ]; then
 #   source '/Users/yokominetatsuki/Downloads/google-cloud-sdk/completion.zsh.inc'
 # fi
-export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
-export PKG_CONFIG_PATH=/usr/local/Cellar/imagemagick@6/6.9.10-27/lib/pkgconfig
+export PATH="/usr/local/opt/mysql@5.6/bin:$PATH"
+export PKG_CONFIG_PATH=/usr/local/Cellar/imagemagick@6/6.9.11-11/lib/pkgconfig
