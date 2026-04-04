@@ -43,9 +43,7 @@ augroup END
 
 "tree
 NeoBundle 'scrooloose/nerdtree.git'
-autocmd vimenter *  NERDTree
-" 引数つきでvim開いたときはそのファイルに移動
-autocmd vimenter * if argc() | wincmd p | NERDTreeFind | wincmd p |  endif
+" NERDTree autocmds are set after neobundle#end()
 " 最後に残ったウィンドウがNERDTREEのみのときはvimを閉じる
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 let g:NERDTreeWinPos="right"
@@ -68,7 +66,7 @@ NeoBundle 'airblade/vim-gitgutter'
 autocmd QuickFixCmdPost *grep* lefta cwindow
 
 " ステータス行に現在のgitブランチを表示する
-set statusline+=%{fugitive#statusline()}
+set statusline+=%{exists('*fugitive#statusline')?fugitive#statusline():''}
 
 " githubにすぐに
 NeoBundle 'tyru/open-browser-github.vim'
@@ -129,7 +127,7 @@ NeoBundle 'w0ng/vim-hybrid'
 set background=dark
 " let g:hybrid_custom_term_colors = 1
 let g:hybrid_reduced_contrast = 1 " Remove this line if using the default palette."
-colorscheme hybrid
+" colorscheme hybrid is set after neobundle#end()
 " <TAB>: completion.
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -628,4 +626,7 @@ set binary
 set noeol
 
 call neobundle#end()
+colorscheme hybrid
+autocmd vimenter * if exists(':NERDTree') | NERDTree | endif
+autocmd vimenter * if exists(':NERDTreeFind') && argc() | wincmd p | NERDTreeFind | wincmd p | endif
 
