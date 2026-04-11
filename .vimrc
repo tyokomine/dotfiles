@@ -1,6 +1,6 @@
 set nocompatible               " be iMproved
-filetype off                   " required!
-filetype plugin indent off     " required!
+silent! filetype off                   " required!
+silent! filetype plugin indent off     " required!
 
 if has('vim_starting')
     set runtimepath+=~/.vim/bundle/neobundle.vim/
@@ -428,9 +428,9 @@ autocmd FileType less,sass  setlocal sw=2 sts=2 ts=2 et
 
 NeoBundle 'Yggdroot/indentLine'
 " set list listchars=tab:\¦\ 
-autocmd BufRead * :IndentLinesEnable
+autocmd BufRead * silent! IndentLinesEnable
 " なぜかinsertModeに入るタイミングで消えることがあるのでReset
-autocmd InsertEnter * :IndentLinesReset
+autocmd InsertEnter * silent! IndentLinesReset
 
 
 " タブ関連の設定
