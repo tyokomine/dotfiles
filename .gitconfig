@@ -125,3 +125,9 @@
   hist = log --pretty=format:\\\"%h %ad | %s%d [%an]\\\" --graph --date=short
 [diff]
 	compactionHeuristic = true
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
