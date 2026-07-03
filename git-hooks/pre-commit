@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Global pre-commit secret guard (core.hooksPath → this dir).
+# Blocks commits that introduce high-confidence secrets. Added 2026-07-04 after a
+# GitHub token was found embedded in a remote URL. Scans ONLY added lines and
+# high-precision patterns to keep false positives near zero so unattended
+# daily-git-push is not disrupted. Escape hatch: `ALLOW_SECRET=1 git commit ...`.
+# NOTE: kept compatible with macOS system bash 3.2 (no mapfile / no set -e traps).
+
+if [ "${ALLOW_SECRET:-0}" = "1" ]; then
+  exit 0
+fi
+
+# High-precision secret patterns (rarely legitimate in source).
+PATTERNS='gh[opsur]_[A-Za-z0-9]{36,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{10,}|https://[a-zA-Z0-9._-]+:[^@/]+@github\.com|sk-[A-Za-z0-9]{20,}'
+
+hits=""
+# Iterate staged files (added/copied/modified), skipping example/sample/fixtures.
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.example|*.example.*|*.sample|*.sample.*|*example*|*_example*|*/fixture/*|*/fixtures/*|*.lock) continue ;;
+  esac
+  [ -f "$f" ] || continue
+  added=$(git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -vE '^\+\+\+')
+  [ -z "$added" ] && continue
+  match=$(printf '%s\n' "$added" | grep -Eo "$PATTERNS" | head -1)
+  if [ -n "$match" ]; then
+    hits="$hits  $f"$'\n'
+  fi
+done <<EOF
+$(git diff --cached --name-only --diff-filter=ACM)
+EOF
+
+if [ -n "$hits" ]; then
+  echo "✋ pre-commit blocked: possible secret(s) in staged changes:" >&2
+  printf '%s' "$hits" >&2
+  echo "Move the value to .env / ~/.env.shared and reference it, or if this is a" >&2
+  echo "false positive, commit with:  ALLOW_SECRET=1 git commit ..." >&2
+  exit 1
+fi
+
+exit 0

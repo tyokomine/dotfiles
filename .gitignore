@@ -9,3 +9,5 @@ _site/*
 !/.gitignore
 !/.tmux.conf
 !templates
+!/git-hooks
+!/git-hooks/**

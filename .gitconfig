@@ -16,6 +16,7 @@
   ; autocrlf = input                 # CRLFを自動変換
   editor = vim
   quotepath = false
+	hooksPath = /Users/tatsuki.yokomine/workspace/dotfiles/git-hooks
 [merge]
   tool = vimdiff
 [alias]
