@@ -11,3 +11,5 @@ _site/*
 !templates
 !/git-hooks
 !/git-hooks/**
+!/claude-code
+!/claude-code/**
