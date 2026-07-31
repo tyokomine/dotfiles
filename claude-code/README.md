@@ -1,6 +1,13 @@
 # Claude Code × cmux カスタマイズ
 
-Claude Codeのセッショントピックを日本語に要約して、cmuxのサイドバータブ名に自動反映するhook。
+Claude Codeのターミナルカスタマイズ2点セット。
+
+1. **cmuxタブ名の自動要約** — セッショントピックを日本語に要約してcmuxのサイドバータブ名に自動反映するhook
+2. **J.A.R.V.I.S.ステータスバー** — アイアンマンHUD配色（ホットロッドレッド×ゴールド）の5行ステータスライン。アークリアクターが12秒周期で呼吸するアニメーション付き
+
+---
+
+# 1. cmuxタブ名の自動要約
 
 ## 何をするか
 
@@ -35,3 +42,48 @@ Claude Codeのセッショントピックを日本語に要約して、cmuxの�
 - トピックタイトルの更新はターン開始から数秒遅れるため、hook内で8秒sleepしてから読み取っている
 - サイドバー幅の目安は全角約13文字。12文字で要約させ、13文字でハードトリム
 - Haiku呼び出しに失敗した場合は英語トピックを26文字でトリムしてフォールバック
+
+---
+
+# 2. J.A.R.V.I.S.ステータスバー
+
+`statusline-jarvis.sh` がClaude Codeのステータスラインとして5行表示する:
+
+1. セッション情報（cwd・モデル・コンテキスト使用率バー）
+2. 5時間ウィンドウ使用率 + 尽きる時刻の予測
+3. 7日ウィンドウ使用率 + 尽きる時刻の予測
+4. 日次コスト（API換算$、`daily-cost.py` が全セッションのjsonlを集計）
+5. バックグラウンドエージェント状況
+
+行頭のアークリアクター（`◌○◎◉`）が12秒周期で「ぼわっ」と呼吸する。`refreshInterval: 1` によりアイドル中もタイマーでアニメーションが動く。
+
+## 前提
+
+- jq / python3 / awk（macOS標準+jqのみ追加）
+- `daily-cost.py` は価格表を内蔵しており自己完結（`~/.claude/model-prices.json` があればそちらを優先）
+
+## セットアップ
+
+1. 2ファイルを配置:
+
+   ```sh
+   cp statusline-jarvis.sh daily-cost.py ~/.claude/
+   chmod +x ~/.claude/statusline-jarvis.sh
+   ```
+
+2. `~/.claude/settings.json` に追加:
+
+   ```json
+   "statusLine": {
+     "type": "command",
+     "command": "bash ~/.claude/statusline-jarvis.sh",
+     "refreshInterval": 1
+   }
+   ```
+
+## 実装メモ
+
+- `refreshInterval` の単位は**秒・最小1**。1秒1コマがアニメーション上限速度
+- アニメーションフレームはエポック秒から算出（`t % フレーム数`）ステートレス設計
+- リアクターは**1グリフ完結**が正解。複数文字構成（コア+外周）はフォント都合で角ばるため不採用
+- コストはstandard-tier公開価格による**概算**（1Mコンテキストプレミアム・batch割引は未考慮）。キャッシュは `/tmp/claude-daily-cost-cache.json`（TTL付き）
