@@ -11,7 +11,8 @@ Claude Codeのターミナルカスタマイズ2点セット。
 
 ## 何をするか
 
-- Claude Codeが自動生成するトピックタイトル（surfaceタイトル）を読み取り、`claude -p --model haiku` で**日本語12文字以内**のタブ名に変換して `rename-workspace` する（例: `✳ PP週次レポート改修`）
+- Claude Codeが自動生成するトピックタイトル（surfaceタイトル）を読み取り、`claude -p --model haiku` で**日本語11文字以内**のタブ名に変換して `rename-workspace` する（例: `2:✳ PP週次レポート改修`）
+- 先頭の `2:` は **⌘+数字で飛ぶときの番号**（サイドバーの並び順 = `list-workspaces` の `index`+1）。hookが走るたびに**全タブぶん振り直す**ので、タブを追加・削除・並べ替えしても番号がズレない。番号を付けるのはこのhookが管理するタブ（`✳` / `◌` 始まり）だけで、素のターミナルタブはリネームしない（リネームするとOSCタイトル追従が止まるため）
 - 同一トピックは `$TMPDIR/cmux_tab_title_<WORKSPACE_ID>` にキャッシュし、API再呼び出しなし
 - `/clear` や新規起動時は `◌ blank` 表示にリセット（`--blank` モード、SessionStart hook）。resume/compactでは既存タブ名を維持
 - cmux外（普通のターミナル）では何もしない安全設計
