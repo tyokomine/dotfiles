@@ -95,6 +95,16 @@ ja=""
 if [ -f "$CACHE" ] && [ "$(sed -n 1p "$CACHE")" = "$topic" ]; then
   ja=$(sed -n 2p "$CACHE")
 fi
+# A cached topic→blank mapping only exists to swallow the one late-running Stop
+# hook right after /clear. Honor it briefly WITHOUT re-stamping the cache (a
+# rewrite would refresh the mtime every turn and make the mapping immortal).
+# If the same topic is still active past the window, the mapping was poisoned
+# by a race (topic regenerated before --blank ran) — drop it and re-summarize.
+if [ "$ja" = "$BLANK_LABEL" ]; then
+  cache_age=$(( $(date +%s) - $(stat -f %m "$CACHE" 2>/dev/null || echo 0) ))
+  [ "$cache_age" -le 120 ] && exit 0
+  ja=""
+fi
 
 if [ -z "$ja" ] && command -v claude >/dev/null 2>&1; then
   # Sidebar fits ~13 full-width chars, minus the "<n>:" prefix; ask for 11 and hard-trim at 12
@@ -111,9 +121,9 @@ if [ -z "$ja" ]; then
   ja=$(printf '%s' "$topic" | python3 -c 'import sys; s=sys.stdin.read().strip(); print(s[:24] + ("…" if len(s) > 24 else ""))')
 fi
 
+# Only real summaries are cached; blank mappings are written solely by --blank
+# mode so their mtime marks the /clear moment.
 printf '%s\n%s\n' "$topic" "$ja" > "$CACHE"
-# The blank label is a complete title, not a topic to prefix with ✳
-[ "$ja" = "$BLANK_LABEL" ] && label="$BLANK_LABEL" || label="✳ $ja"
-"$CMUX_BIN" rename-workspace --workspace "$CMUX_WORKSPACE_ID" "$label" >/dev/null 2>&1
+"$CMUX_BIN" rename-workspace --workspace "$CMUX_WORKSPACE_ID" "✳ $ja" >/dev/null 2>&1
 renumber
 exit 0
