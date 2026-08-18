@@ -223,6 +223,47 @@ get_daily_cost() {
   fi
 }
 
+# ── モデル別週次枠 (Fable 等): OAuth usage API から取得 ──
+# statusline 入力 JSON には five_hour / seven_day しか来ないため、
+# /usage 画面と同じ oauth/usage エンドポイントを Keychain トークンで叩く。
+# 5分キャッシュ + curl 3秒タイムアウト。失敗時は古いキャッシュを使い続ける。
+OAUTH_USAGE_CACHE="/tmp/claude-oauth-usage-cache.json"
+OAUTH_USAGE_TTL=300
+
+get_oauth_usage() {
+  local now token resp
+  now=$(date +%s)
+  if (( $(cache_age "$OAUTH_USAGE_CACHE" "$now") >= OAUTH_USAGE_TTL )); then
+    token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
+      | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null) || token=""
+    if [ -n "$token" ]; then
+      resp=$(curl -sS --max-time 3 "https://api.anthropic.com/api/oauth/usage" \
+        -H "Authorization: Bearer $token" \
+        -H "anthropic-beta: oauth-2025-04-20" 2>/dev/null) || resp=""
+      if [ -n "$resp" ] && echo "$resp" | jq -e '.limits' >/dev/null 2>&1; then
+        echo "$resp" | jq --arg ts "$now" '. + {cached_at: ($ts | tonumber)}' > "$OAUTH_USAGE_CACHE" 2>/dev/null
+      fi
+    fi
+  fi
+  [ -f "$OAUTH_USAGE_CACHE" ] && cat "$OAUTH_USAGE_CACHE"
+  return 0
+}
+
+scoped=$(get_oauth_usage 2>/dev/null \
+  | jq -rc '[.limits[]? | select(.kind == "weekly_scoped")][0] // empty' 2>/dev/null) || scoped=""
+if [ -n "$scoped" ]; then
+  sc_pct=$(echo "$scoped" | jq -r '.percent // 0')
+  sc_name=$(echo "$scoped" | jq -r '.scope.model.display_name // "model"')
+  printf -v sc_int "%.0f" "$sc_pct" 2>/dev/null || sc_int="${sc_pct%%.*}"
+  sc_color=$(color_for_pct "$sc_int")
+  sc_str="${ACCENT}${sc_name}${RESET} $(progress_bar "$sc_int") ${sc_color}${sc_int}%${RESET}"
+  if [ -n "$line3" ]; then
+    line3+="${sep}${sc_str}"
+  else
+    line3="${ACCENT}📅 7d${RESET}  ${sc_str}"
+  fi
+fi
+
 line4=""
 cost_json=$(get_daily_cost 2>/dev/null || true)
 if [ -n "$cost_json" ]; then

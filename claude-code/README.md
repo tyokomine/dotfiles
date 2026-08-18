@@ -52,7 +52,7 @@ Claude Codeのターミナルカスタマイズ2点セット。
 
 1. セッション情報（cwd・モデル・コンテキスト使用率バー）
 2. 5時間ウィンドウ使用率 + 尽きる時刻の予測
-3. 7日ウィンドウ使用率 + 尽きる時刻の予測
+3. 7日ウィンドウ使用率 + 尽きる時刻の予測 + **モデル別週次枠（Fable等）**
 4. 日次コスト（API換算$、`daily-cost.py` が全セッションのjsonlを集計）
 5. バックグラウンドエージェント状況
 
@@ -85,6 +85,7 @@ Claude Codeのターミナルカスタマイズ2点セット。
 ## 実装メモ
 
 - `refreshInterval` の単位は**秒・最小1**。1秒1コマがアニメーション上限速度
+- **モデル別週次枠（Fable等）**: statusline入力JSONの `.rate_limits` には全モデル共通の `five_hour`/`seven_day` しか来ないため、`/usage` 画面と同じ OAuth usage API（`api.anthropic.com/api/oauth/usage`）を叩いて `limits[]` の `kind=="weekly_scoped"` を7d行に追記する。トークンはmacOS Keychainの `Claude Code-credentials` から取得（＝**Claude Codeにログイン済みのMacでのみ動く**。取れない環境ではこの表示だけ静かにスキップ）。5分キャッシュ `/tmp/claude-oauth-usage-cache.json`・curl 3秒タイムアウト・失敗時は古いキャッシュを使い続ける
 - アニメーションフレームはエポック秒から算出（`t % フレーム数`）ステートレス設計
 - リアクターは**1グリフ完結**が正解。複数文字構成（コア+外周）はフォント都合で角ばるため不採用
 - コストはstandard-tier公開価格による**概算**（1Mコンテキストプレミアム・batch割引は未考慮）。キャッシュは `/tmp/claude-daily-cost-cache.json`（TTL付き）
