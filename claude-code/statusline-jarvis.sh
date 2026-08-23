@@ -2,10 +2,22 @@
 # Claude Code Statusline — J.A.R.V.I.S. (Iron Man) カラー版
 # 元版: statusline-command.sh（ロジック同一・配色のみ変更）
 # 5-line display: session info, 5h usage+尽きる予測, 7d usage+尽きる予測, daily cost, bg agents
+#
+# 【性能方針】refreshInterval=1 で毎秒・全セッション並列に走るため、外部コマンドの
+# exec 回数を最小化してある (jq 3回 + stat 1回 = 常時5回未満)。exec 1回ごとに
+# エンドポイントセキュリティ (AV) の検査が挟まるので、ここを増やすと即ファンが回る。
+#   - 入力JSON / コスト / OAuth usage は「1フィールド1jq」ではなく1回でまとめて取る
+#   - date(1) は使わず $EPOCHSECONDS (bash 5+)
+#   - キャッシュ鮮度は埋め込み cached_at ではなくファイル mtime (stat 1回で3ファイル)
+#   - awk の数値整形は jq 側 / bash printf に寄せた
+#   - git は .git を純bashで探してから呼ぶ (非リポジトリでは exec 0回)
+#   - herestring (<<<) は使用禁止: brew bash 5.3.15 が512B超のherestringで恒久ハングする
+#     (heredoc一時ファイル経路のバグ、/bin/bash 3.2は正常)。printf | cmd か < <(printf) で代替
 
 set -euo pipefail
 
 input=$(cat)
+NOW=$EPOCHSECONDS
 
 # ── Colors (Iron Man HUD — red/gold dominant) ──
 ACCENT="\033[38;2;255;68;54m"   # ホットロッドレッド (ラベル・アクセント)
@@ -39,15 +51,6 @@ progress_bar() {
   printf '%b%s%b' "$color" "$bar" "$RESET"
 }
 
-# ── Token count formatter (9526776 -> 9.5M, 896487 -> 896k) ──
-fmt_tok() {
-  awk -v n="$1" 'BEGIN{
-    if (n >= 1000000) printf "%.1fM", n/1000000;
-    else if (n >= 1000) printf "%.0fk", n/1000;
-    else printf "%d", n
-  }'
-}
-
 # ── Duration formatter (seconds -> "3d 4h" / "2h 5m" / "8m") ──
 fmt_dur() {
   local s=$1 d h m out=""
@@ -65,9 +68,6 @@ fmt_dur() {
 # 各方位×2色相で16分割: グリフは2秒ごとに回転、色は毎秒グラデーションが流れ、
 # 16秒で1回転＋グロウが呼吸する。全グリフ半角幅でレイアウトは揺れない。
 reactor() {
-  local t
-  t=$(date +%s)
-
   # ── 中央の丸ひとつだけ: 12秒周期でゆっくり「ぼわっ」と呼吸する ──
   # グリフの大きさ (◌→○→◎→◉) と色の明るさ (深い青→白) を連動させ、
   # 膨らみながら明るくなり、沈みながら暗くなる。回転要素はなし。
@@ -86,17 +86,35 @@ reactor() {
     "38;2;0;176;255"
     "38;2;0;145;234"
   )
-  local i=$(( t % 12 ))
+  local i=$(( NOW % 12 ))
   printf '\033[%sm%s\033[0m' "${colors[$i]}" "${glyphs[$i]}"
 }
 
-# ── Line 1: Session info ──
-model=$(echo "$input" | jq -r '.model.display_name // ""')
-used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
-lines_added=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
-lines_removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
+# ── 入力JSONの全フィールドを1回のjqで取得 (1行1値) ──
+_in=$(printf '%s' "$input" | jq -r '
+  [ (.model.display_name // ""),
+    (.context_window.used_percentage // "" | tostring),
+    (.cost.total_lines_added // 0 | tostring),
+    (.cost.total_lines_removed // 0 | tostring),
+    (.workspace.current_dir // ""),
+    (.rate_limits.five_hour.used_percentage // "" | tostring),
+    (.rate_limits.five_hour.resets_at // "" | tostring),
+    (.rate_limits.seven_day.used_percentage // "" | tostring),
+    (.rate_limits.seven_day.resets_at // "" | tostring)
+  ] | .[]' 2>/dev/null) || _in=""
+declare -a IN=()
+mapfile -t IN < <(printf '%s\n' "$_in")
+model=${IN[0]:-}
+used_pct=${IN[1]:-}
+lines_added=${IN[2]:-0}
+lines_removed=${IN[3]:-0}
+cwd=${IN[4]:-}
+rl5_pct=${IN[5]:-}
+rl5_reset=${IN[6]:-}
+rl7_pct=${IN[7]:-}
+rl7_reset=${IN[8]:-}
 
+# ── Line 1: Session info ──
 # Abbreviate home directory with ~ (mirrors zsh %~)
 short_cwd="$cwd"
 home="$HOME"
@@ -111,10 +129,21 @@ if [ -n "$used_pct" ]; then
 fi
 ctx_color=$(color_for_pct "$ctx_int")
 
-# Git branch
+# Git branch — .git の有無を純bashで先に確かめ、リポジトリ内だけ git を exec する
+has_git_dir() {
+  local d=$1
+  while [ -n "$d" ] && [ "$d" != "/" ]; do
+    [ -e "$d/.git" ] && return 0
+    d=${d%/*}
+  done
+  [ -e "/.git" ]
+}
 git_branch=""
-if [ -n "$cwd" ] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-  git_branch=$(git -C "$cwd" symbolic-ref --short HEAD 2>/dev/null || git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
+if [ -n "$cwd" ] && [ -d "$cwd" ] && has_git_dir "$cwd"; then
+  git_branch=$(git -C "$cwd" symbolic-ref --short HEAD 2>/dev/null) || git_branch=""
+  if [ -z "$git_branch" ]; then
+    git_branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null) || git_branch=""
+  fi
 fi
 
 sep="${GRAY} │ ${RESET}"
@@ -131,12 +160,10 @@ fi
 line2=""
 line3=""
 
-build_limit_line() {  # $1=表示ラベル $2=jqキー $3=ウィンドウ秒 -> $REPLY に行をセット
-  local label=$1 key=$2 window=$3
-  local pct reset_epoch pct_int color bar now
+build_limit_line() {  # $1=表示ラベル $2=pct $3=resets_at $4=ウィンドウ秒 -> $REPLY に行をセット
+  local label=$1 pct=$2 reset_epoch=$3 window=$4
+  local pct_int color bar pct_str
   REPLY=""
-  pct=$(echo "$input" | jq -r ".rate_limits.${key}.used_percentage // empty" 2>/dev/null)
-  reset_epoch=$(echo "$input" | jq -r ".rate_limits.${key}.resets_at // empty" 2>/dev/null)
   [ -z "$pct" ] && return 0
   printf -v pct_int "%.0f" "$pct" 2>/dev/null || pct_int="${pct%%.*}"
   color=$(color_for_pct "$pct_int")
@@ -144,9 +171,8 @@ build_limit_line() {  # $1=表示ラベル $2=jqキー $3=ウィンドウ秒 -> 
   printf -v pct_str "%2d" "$pct_int" 2>/dev/null || pct_str="$pct_int"
   REPLY="${ACCENT}${label}${RESET}  ${bar}  ${color}${pct_str}%${RESET}"
 
-  now=$(date +%s)
-  if [ -n "$reset_epoch" ] && (( reset_epoch > now )); then
-    local remain=$(( reset_epoch - now ))
+  if [ -n "$reset_epoch" ] && (( reset_epoch > NOW )); then
+    local remain=$(( reset_epoch - NOW ))
     local elapsed=$(( window - remain ))
     if (( pct_int > 0 && elapsed > 60 )); then
       local eta=$(( elapsed * (100 - pct_int) / pct_int ))
@@ -163,97 +189,124 @@ build_limit_line() {  # $1=表示ラベル $2=jqキー $3=ウィンドウ秒 -> 
   return 0
 }
 
-build_limit_line "⏱  5h" five_hour 18000  && line2=$REPLY
-build_limit_line "📅 7d" seven_day 604800 && line3=$REPLY
+build_limit_line "⏱  5h" "$rl5_pct" "$rl5_reset" 18000  && line2=$REPLY
+build_limit_line "📅 7d" "$rl7_pct" "$rl7_reset" 604800 && line3=$REPLY
 
-# ── Daily cost (all sessions/windows) ──
-# 二層キャッシュ:
-#   - today (今日)        : 60秒。--today-only の軽量スキャンで頻繁に更新
-#   - rest  (昨日 + 7d)   : 120秒。フルスキャンでまとめて更新
-# rest キャッシュ(フル出力)に today を上書きマージして出力する。
+# ── キャッシュ鮮度: mtime を stat 1回で3ファイルまとめて取る ──
 COST_CACHE_FILE="/tmp/claude-daily-cost-cache.json"        # フル出力 (rest 用)
 COST_TODAY_CACHE_FILE="/tmp/claude-daily-cost-today.json"  # today-only 出力
 COST_REST_TTL=120
 COST_TODAY_TTL=60
 COST_SCRIPT="$HOME/.claude/daily-cost.py"
+OAUTH_USAGE_CACHE="/tmp/claude-oauth-usage-cache.json"
+OAUTH_USAGE_TTL=300
 
-cache_age() {
-  local f=$1 now=$2 cached_at
-  [ -f "$f" ] || { echo 999999; return; }
-  cached_at=$(jq -r '.cached_at // 0' "$f" 2>/dev/null || echo "0")
-  echo $(( now - cached_at ))
+declare -A MT=()
+while read -r _n _m; do
+  [ -n "${_n:-}" ] && MT["$_n"]=$_m
+done < <(stat -f '%N %m' "$COST_CACHE_FILE" "$COST_TODAY_CACHE_FILE" "$OAUTH_USAGE_CACHE" 2>/dev/null || true)
+stale() {  # $1=path $2=TTL  (mtime 不明 = 未作成 → stale)
+  (( NOW - ${MT["$1"]:-0} >= $2 ))
 }
 
-get_daily_cost() {
-  local now
-  now=$(date +%s)
-  [ -f "$COST_SCRIPT" ] || return 1
+# ── Daily cost (all sessions/windows) ──
+# 二層キャッシュ:
+#   - today (今日)        : 60秒。--today-only の軽量スキャンで頻繁に更新
+#   - rest  (昨日 + 7d)   : 120秒。フルスキャンでまとめて更新
+# rest キャッシュ(フル出力)に today を上書きマージし、表示用の値まで1回のjqで作る。
+COST_JQ='
+def ftok:
+  (. // 0) as $n
+  | if $n >= 1000000 then
+      (($n / 100000 | round) as $t
+        | (($t / 10) | floor | tostring) + "." + (($t % 10) | tostring) + "M")
+    elif $n >= 1000 then (($n / 1000 | round) | tostring) + "k"
+    else ($n | floor | tostring) end;
+($t[0]) as $td
+| del(.cached_at)
+| .today = ($td.today // .today)
+| .today_tokens = ($td.today_tokens // .today_tokens)
+| .week = ([.week[]? | if .date == $td.date
+      then (.cost = $td.today | .tokens = $td.today_tokens) else . end])
+| . as $c
+| (($c.today // 0)) as $tc
+| (($c.yesterday // 0)) as $yc
+| [ ($tc | tostring),
+    ($yc | tostring),
+    (if ($c.today_tokens // 0) > 0
+       then ($tc / (($c.today_tokens) / 1000000) * 100 | round / 100 | tostring) else "" end),
+    (if ($c.yesterday_tokens // 0) > 0
+       then ($yc / (($c.yesterday_tokens) / 1000000) * 100 | round / 100 | tostring) else "" end),
+    ([$c.week[]?.cost] | if length == 0 then "" else
+      (max) as $m |
+      [ .[] | if $m <= 0 then 0 else (. / $m * 7 | floor) end
+        | ["▁","▂","▃","▄","▅","▆","▇","█"][.] ] | join("") end),
+    (($c.five_hour.cost // 0) | tostring),
+    ($c.five_hour.tokens | ftok),
+    (($c.seven_day.cost // 0) | tostring),
+    ($c.seven_day.tokens | ftok),
+    (if $tc > $yc then "↑" elif $tc < $yc then "↓" else "→" end),
+    (($c.unknown_models // []) | join(", "))
+  ] | .[]'
 
+refresh_cost_caches() {
+  [ -f "$COST_SCRIPT" ] || return 0
+  local out
   # rest (昨日 + 7d): フル出力を 120秒 キャッシュ
-  if (( $(cache_age "$COST_CACHE_FILE" "$now") >= COST_REST_TTL )); then
-    local full
-    full=$(python3 "$COST_SCRIPT" 2>/dev/null) || full=""
-    if [ -n "$full" ]; then
-      echo "$full" | jq --arg ts "$now" '. + {cached_at: ($ts | tonumber)}' > "$COST_CACHE_FILE" 2>/dev/null
-    fi
+  if stale "$COST_CACHE_FILE" "$COST_REST_TTL"; then
+    out=$(python3 "$COST_SCRIPT" 2>/dev/null) || out=""
+    [ -n "$out" ] && printf '%s\n' "$out" > "$COST_CACHE_FILE"
   fi
-
   # today: 軽量スキャンを 60秒 キャッシュ
-  if (( $(cache_age "$COST_TODAY_CACHE_FILE" "$now") >= COST_TODAY_TTL )); then
-    local todayj
-    todayj=$(python3 "$COST_SCRIPT" --today-only 2>/dev/null) || todayj=""
-    if [ -n "$todayj" ]; then
-      echo "$todayj" | jq --arg ts "$now" '. + {cached_at: ($ts | tonumber)}' > "$COST_TODAY_CACHE_FILE" 2>/dev/null
-    fi
+  if stale "$COST_TODAY_CACHE_FILE" "$COST_TODAY_TTL"; then
+    out=$(python3 "$COST_SCRIPT" --today-only 2>/dev/null) || out=""
+    [ -n "$out" ] && printf '%s\n' "$out" > "$COST_TODAY_CACHE_FILE"
   fi
-
-  [ -f "$COST_CACHE_FILE" ] || return 1
-  # フル出力に today/today_tokens と 7d 末尾(=今日)の値を上書きマージ
-  if [ -f "$COST_TODAY_CACHE_FILE" ]; then
-    jq -rc --slurpfile t "$COST_TODAY_CACHE_FILE" '
-      del(.cached_at)
-      | ($t[0]) as $td
-      | .today = ($td.today // .today)
-      | .today_tokens = ($td.today_tokens // .today_tokens)
-      | .week = ([.week[]? | if .date == $td.date
-            then (.cost = $td.today | .tokens = $td.today_tokens) else . end])
-    ' "$COST_CACHE_FILE" 2>/dev/null
-  else
-    jq -rc 'del(.cached_at)' "$COST_CACHE_FILE" 2>/dev/null
-  fi
+  return 0
 }
+refresh_cost_caches
+
+declare -a C=()
+if [ -f "$COST_CACHE_FILE" ]; then
+  _c=""
+  if [ -f "$COST_TODAY_CACHE_FILE" ]; then
+    _c=$(jq -r --slurpfile t "$COST_TODAY_CACHE_FILE" "$COST_JQ" "$COST_CACHE_FILE" 2>/dev/null) || _c=""
+  else
+    _c=$(jq -r --argjson t '[]' "$COST_JQ" "$COST_CACHE_FILE" 2>/dev/null) || _c=""
+  fi
+  [ -n "$_c" ] && mapfile -t C < <(printf '%s\n' "$_c")
+fi
 
 # ── モデル別週次枠 (Fable 等): OAuth usage API から取得 ──
 # statusline 入力 JSON には five_hour / seven_day しか来ないため、
 # /usage 画面と同じ oauth/usage エンドポイントを Keychain トークンで叩く。
 # 5分キャッシュ + curl 3秒タイムアウト。失敗時は古いキャッシュを使い続ける。
-OAUTH_USAGE_CACHE="/tmp/claude-oauth-usage-cache.json"
-OAUTH_USAGE_TTL=300
-
-get_oauth_usage() {
-  local now token resp
-  now=$(date +%s)
-  if (( $(cache_age "$OAUTH_USAGE_CACHE" "$now") >= OAUTH_USAGE_TTL )); then
-    token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
-      | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null) || token=""
-    if [ -n "$token" ]; then
-      resp=$(curl -sS --max-time 3 "https://api.anthropic.com/api/oauth/usage" \
-        -H "Authorization: Bearer $token" \
-        -H "anthropic-beta: oauth-2025-04-20" 2>/dev/null) || resp=""
-      if [ -n "$resp" ] && echo "$resp" | jq -e '.limits' >/dev/null 2>&1; then
-        echo "$resp" | jq --arg ts "$now" '. + {cached_at: ($ts | tonumber)}' > "$OAUTH_USAGE_CACHE" 2>/dev/null
-      fi
+if stale "$OAUTH_USAGE_CACHE" "$OAUTH_USAGE_TTL"; then
+  _tok=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
+    | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null) || _tok=""
+  if [ -n "$_tok" ]; then
+    _resp=$(curl -sS --max-time 3 "https://api.anthropic.com/api/oauth/usage" \
+      -H "Authorization: Bearer $_tok" \
+      -H "anthropic-beta: oauth-2025-04-20" 2>/dev/null) || _resp=""
+    if [ -n "$_resp" ] && printf '%s' "$_resp" | jq -e '.limits' >/dev/null 2>&1; then
+      printf '%s\n' "$_resp" > "$OAUTH_USAGE_CACHE"
     fi
   fi
-  [ -f "$OAUTH_USAGE_CACHE" ] && cat "$OAUTH_USAGE_CACHE"
-  return 0
-}
+fi
 
-scoped=$(get_oauth_usage 2>/dev/null \
-  | jq -rc '[.limits[]? | select(.kind == "weekly_scoped")][0] // empty' 2>/dev/null) || scoped=""
-if [ -n "$scoped" ]; then
-  sc_pct=$(echo "$scoped" | jq -r '.percent // 0')
-  sc_name=$(echo "$scoped" | jq -r '.scope.model.display_name // "model"')
+declare -a SC=()
+if [ -f "$OAUTH_USAGE_CACHE" ]; then
+  _s=$(jq -r '
+    ([.limits[]? | select(.kind == "weekly_scoped")][0]) as $s
+    | if $s == null then empty
+      else [ ($s.percent // 0 | tostring), ($s.scope.model.display_name // "model") ] | .[] end
+  ' "$OAUTH_USAGE_CACHE" 2>/dev/null) || _s=""
+  [ -n "$_s" ] && mapfile -t SC < <(printf '%s\n' "$_s")
+fi
+
+if [ -n "${SC[0]:-}" ]; then
+  sc_pct=${SC[0]}
+  sc_name=${SC[1]:-model}
   printf -v sc_int "%.0f" "$sc_pct" 2>/dev/null || sc_int="${sc_pct%%.*}"
   sc_color=$(color_for_pct "$sc_int")
   sc_str="${ACCENT}${sc_name}${RESET} $(progress_bar "$sc_int") ${sc_color}${sc_int}%${RESET}"
@@ -265,28 +318,23 @@ if [ -n "$scoped" ]; then
 fi
 
 line4=""
-cost_json=$(get_daily_cost 2>/dev/null || true)
-if [ -n "$cost_json" ]; then
-  today_cost=$(echo "$cost_json" | jq -r '.today // 0' 2>/dev/null)
-  yest_cost=$(echo "$cost_json" | jq -r '.yesterday // 0' 2>/dev/null)
-  # $/Mtok efficiency (lower is better); empty when no tokens
-  today_eff=$(echo "$cost_json" | jq -r 'if (.today_tokens // 0) > 0 then (.today / (.today_tokens / 1000000) * 100 | round / 100 | tostring) else "" end' 2>/dev/null)
-  yest_eff=$(echo "$cost_json" | jq -r 'if (.yesterday_tokens // 0) > 0 then (.yesterday / (.yesterday_tokens / 1000000) * 100 | round / 100 | tostring) else "" end' 2>/dev/null)
-  # 7-day sparklines (oldest -> today): cost
-  cost_spark=$(echo "$cost_json" | jq -r '
-    [.week[]?.cost] | if length == 0 then "" else
-      (max) as $m |
-      [ .[] | if $m <= 0 then 0 else (. / $m * 7 | floor) end
-        | ["▁","▂","▃","▄","▅","▆","▇","█"][.] ] | join("") end' 2>/dev/null)
+if [ -n "${C[0]:-}" ] || [ -n "${C[1]:-}" ]; then
+  today_cost=${C[0]:-0}
+  yest_cost=${C[1]:-0}
+  today_eff=${C[2]:-}
+  yest_eff=${C[3]:-}
+  cost_spark=${C[4]:-}
+  five_cost=${C[5]:-0}
+  five_tok=${C[6]:-0}
+  seven_cost=${C[7]:-0}
+  seven_tok=${C[8]:-0}
+  arrow=${C[9]:-→}
+  unknown_models=${C[10]:-}
 
   # 5h / 7d のローカル集計コスト・トークン量を rate limit 行に追記
   # (rate_limits が来ない環境ではこの値だけで行を構築)
-  five_cost=$(echo "$cost_json" | jq -r '.five_hour.cost // 0' 2>/dev/null)
-  five_tok=$(echo "$cost_json" | jq -r '.five_hour.tokens // 0' 2>/dev/null)
-  seven_cost=$(echo "$cost_json" | jq -r '.seven_day.cost // 0' 2>/dev/null)
-  seven_tok=$(echo "$cost_json" | jq -r '.seven_day.tokens // 0' 2>/dev/null)
-  five_str="\$${five_cost} / $(fmt_tok "$five_tok") tok"
-  seven_str="\$${seven_cost} / $(fmt_tok "$seven_tok") tok"
+  five_str="\$${five_cost} / ${five_tok} tok"
+  seven_str="\$${seven_cost} / ${seven_tok} tok"
   if [ -n "$line2" ]; then
     line2+="${sep}${five_str}"
   else
@@ -299,8 +347,7 @@ if [ -n "$cost_json" ]; then
   fi
   [ -n "$cost_spark" ] && line3+="  ${GRAY}${cost_spark}${RESET}"
 
-  # Arrow comparing today vs yesterday
-  arrow=$(awk -v t="$today_cost" -v y="$yest_cost" 'BEGIN{ if (t>y) print "↑"; else if (t<y) print "↓"; else print "→" }')
+  # Arrow comparing today vs yesterday (jq 側で算出済み)
   arrow_color="$GREEN"
   [ "$arrow" = "↑" ] && arrow_color="$YELLOW"
   today_str="Today \$${today_cost}"
@@ -309,7 +356,6 @@ if [ -n "$cost_json" ]; then
   [ -n "$yest_eff" ] && yest_str+=" (\$${yest_eff}/Mtok)"
   line4="${ACCENT}💰${RESET} ${GREEN}${today_str}${RESET}  ${arrow_color}${arrow}${RESET}  ${GRAY}${yest_str}${RESET}"
   # 価格表に無いモデルを検出したら警告 (フォールバック単価で計算されている)
-  unknown_models=$(echo "$cost_json" | jq -r '(.unknown_models // []) | join(", ")' 2>/dev/null)
   if [ -n "$unknown_models" ]; then
     line4+="  ${RED}⚠ unpriced: ${unknown_models}${RESET}"
   fi
@@ -317,16 +363,23 @@ fi
 
 # ── Line 5: バックグラウンドエージェントの status 別件数 (waiting → busy → idle, 常時表示・自分も含む) ──
 # データ元: ~/.claude/sessions/<pid>.json (claude agents --json と同じ live レジストリ)。
-# subprocess を起こさずファイル読みのみ。status 語彙: waiting / busy / idle。
+# status 語彙: waiting / busy / idle。jq 1回のみ (glob が空なら exec しない)。
 line5=""
 SESSIONS_DIR="$HOME/.claude/sessions"
 if [ -d "$SESSIONS_DIR" ]; then
-  counts=$(jq -rs '
-    map(select(.kind=="bg"))
-    | group_by(.status)
-    | map("\(.[0].status)\t\(length)")
-    | .[]
-  ' "$SESSIONS_DIR"/*.json 2>/dev/null || true)
+  shopt -s nullglob
+  _sess=("$SESSIONS_DIR"/*.json)
+  shopt -u nullglob
+  if (( ${#_sess[@]} > 0 )); then
+    counts=$(jq -rs '
+      map(select(.kind=="bg"))
+      | group_by(.status)
+      | map("\(.[0].status)\t\(length)")
+      | .[]
+    ' "${_sess[@]}" 2>/dev/null </dev/null) || counts=""
+  else
+    counts=""
+  fi
   w=0; b=0; idl=0; oth=0
   while IFS=$'\t' read -r st n; do
     [ -z "$st" ] && continue
@@ -336,7 +389,7 @@ if [ -d "$SESSIONS_DIR" ]; then
       idle)    idl=$n ;;
       *)       oth=$((oth + n)) ;;
     esac
-  done <<< "$counts"
+  done < <(printf '%s\n' "$counts")
   # 常時表示: 1以上はその色 (waiting=赤 / busy=金 / idle=橙)、0のときは灰色
   cw=$GRAY; [ "$w"   -gt 0 ] && cw=$RED
   cb=$GRAY; [ "$b"   -gt 0 ] && cb=$GREEN
