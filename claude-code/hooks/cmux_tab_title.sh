@@ -1,8 +1,12 @@
 #!/bin/bash
 # Set the cmux tab name to a short Japanese summary of the current Claude session
-# topic. Reads Claude Code's auto-generated topic title (surface title), converts
-# it to Japanese via `claude -p` (Haiku), and renames the tab. The translation is
-# cached per workspace so unchanged topics cost no extra API call.
+# topic. Reads Claude Code's auto-generated topic title (surface title) *and* the
+# opening exchange from the session transcript, turns the pair into a Japanese tab
+# name via `claude -p` (Haiku), and renames the tab. The transcript matters because
+# auto-titles are often content-free ("Slack thread consultation") when the prompt
+# was just a URL plus "what should we do?" - the actual subject only shows up in the
+# first reply. The result is cached per workspace (topic + transcript fingerprint)
+# so an unchanged session costs no extra API call.
 #
 # Every run also re-stamps a "<n>:" prefix on all hook-owned tabs so the number
 # matches the ⌘<n> switch shortcut even after tabs are added, closed or reordered.
@@ -13,6 +17,12 @@
 # All modes run async and are no-ops outside cmux.
 
 [ -n "$CMUX_WORKSPACE_ID" ] && [ -n "$CMUX_SURFACE_ID" ] || exit 0
+
+# Only the interactive session owns the tab. A headless `claude -p` started inside
+# this pane (this hook's own Haiku call, or one typed by hand) inherits CMUX_* and
+# fires its own SessionStart/Stop hooks - which would blank the tab and poison the
+# cache. Entrypoint is "cli" for the interactive session and "sdk-cli" for -p.
+case "${CLAUDE_CODE_ENTRYPOINT:-cli}" in cli) ;; *) exit 0 ;; esac
 CMUX_BIN="/Applications/cmux.app/Contents/Resources/bin/cmux"
 [ -x "$CMUX_BIN" ] || exit 0
 
@@ -40,6 +50,52 @@ if not title or title.lower() in ("claude code", "claude"):
     sys.exit(1)  # no topic generated (fresh/cleared session)
 print(title)
 '
+}
+
+# Pull the opening exchange (first real user prompt + first substantive assistant
+# reply) out of the session transcript. Those two are fixed for the life of the
+# session, so the fingerprint stays stable and the cache keeps working.
+read_context() {
+  [ -n "$1" ] && [ -f "$1" ] || return 1
+  python3 -c '
+import json, re, sys
+
+SKIP = re.compile(r"^\s*<(command-name|command-message|command-args|local-command|system-reminder|user-prompt-submit-hook)")
+user_txt = ""
+asst_txt = ""
+try:
+    fh = open(sys.argv[1], encoding="utf-8")
+except OSError:
+    sys.exit(1)
+with fh:
+    for line in fh:
+        if user_txt and asst_txt:
+            break
+        try:
+            o = json.loads(line)
+        except ValueError:
+            continue
+        if o.get("type") not in ("user", "assistant") or o.get("isMeta"):
+            continue
+        m = o.get("message") or {}
+        c = m.get("content")
+        if isinstance(c, list):
+            txt = "\n".join(b.get("text", "") for b in c if b.get("type") == "text")
+        else:
+            txt = c or ""
+        txt = txt.strip()
+        if not txt or SKIP.match(txt):
+            continue
+        if m.get("role") == "user":
+            if not user_txt:
+                user_txt = txt[:300]
+        elif not asst_txt and len(txt) >= 60:
+            asst_txt = txt[:900]
+
+if not user_txt and not asst_txt:
+    sys.exit(1)
+print(("最初の依頼:\n" + user_txt + "\n\n最初の回答:\n" + asst_txt).strip())
+' "$1" 2>/dev/null
 }
 
 # Re-stamp "<n>:" on every tab this hook owns (✳ topic / ◌ blank). Plain
@@ -82,7 +138,9 @@ if [ "$1" = "--blank" ]; then
   exit 0
 fi
 
-cat >/dev/null  # hook stdin JSON is unused in topic mode
+stdin_json=$(cat)
+transcript=$(printf '%s' "$stdin_json" \
+  | python3 -c 'import json,sys; print((json.load(sys.stdin).get("transcript_path") or ""))' 2>/dev/null)
 
 # Claude Code refreshes the topic title shortly after the turn starts;
 # wait so we read the new topic, not the previous one.
@@ -91,9 +149,17 @@ sleep 8
 topic=$(read_topic) || exit 0
 [ -n "$topic" ] || exit 0
 
+context=$(read_context "$transcript")
+ctx_fp=$(printf '%s' "$context" | shasum | cut -c1-12)
+
 ja=""
 if [ -f "$CACHE" ] && [ "$(sed -n 1p "$CACHE")" = "$topic" ]; then
-  ja=$(sed -n 2p "$CACHE")
+  cached_ja=$(sed -n 2p "$CACHE")
+  # Line 3 is the transcript fingerprint. A blank mapping (written by --blank) has
+  # none, so check it first and let the stale-topic swallow below handle it.
+  if [ "$cached_ja" = "$BLANK_LABEL" ] || [ "$(sed -n 3p "$CACHE")" = "$ctx_fp" ]; then
+    ja="$cached_ja"
+  fi
 fi
 # A cached topic→blank mapping only exists to swallow the one late-running Stop
 # hook right after /clear. Honor it briefly WITHOUT re-stamping the cache (a
@@ -108,7 +174,24 @@ fi
 
 if [ -z "$ja" ] && command -v claude >/dev/null 2>&1; then
   # Sidebar fits ~13 full-width chars, minus the "<n>:" prefix; ask for 11 and hard-trim at 12
-  ja=$(claude -p --model haiku "次のAIセッションのトピックを、日本語11文字以内の簡潔なタブ名にしてください。タブ名の文字列だけを出力すること。トピック: ${topic}" 2>/dev/null \
+  prompt="AIコーディングセッションのタブ名を作ってください。
+
+# 要件
+- 日本語11文字以内
+- 何の話題かが一目でわかる固有名詞・対象名（機能名・案件名・ツール名・相手先など）を必ず入れる
+- 「相談」「検討」「確認」「対応」「調査」「タスク」「スレッド」など中身のない語だけで終わらせない
+- 自動生成タイトルが中身のない語だけの場合は、セッション本文から具体的な話題を拾って名前にする
+- タブ名の文字列だけを出力する（説明・引用符・記号の装飾は不要）
+
+# 自動生成タイトル
+${topic}"
+  if [ -n "$context" ]; then
+    prompt="${prompt}
+
+# セッション本文（冒頭）
+${context}"
+  fi
+  ja=$(claude -p --model haiku "$prompt" 2>/dev/null \
     | python3 -c '
 import sys
 s = sys.stdin.read().strip().splitlines()
@@ -123,7 +206,7 @@ fi
 
 # Only real summaries are cached; blank mappings are written solely by --blank
 # mode so their mtime marks the /clear moment.
-printf '%s\n%s\n' "$topic" "$ja" > "$CACHE"
+printf '%s\n%s\n%s\n' "$topic" "$ja" "$ctx_fp" > "$CACHE"
 "$CMUX_BIN" rename-workspace --workspace "$CMUX_WORKSPACE_ID" "✳ $ja" >/dev/null 2>&1
 renumber
 exit 0
