@@ -11,6 +11,12 @@
 # Every run also re-stamps a "<n>:" prefix on all hook-owned tabs so the number
 # matches the ⌘<n> switch shortcut even after tabs are added, closed or reordered.
 #
+# Hooks are async and topic mode sleeps 8s, so after /clear the OLD session's last
+# UserPromptSubmit/Stop hook routinely finishes *after* the new session's
+# SessionStart already blanked the tab - and puts the stale topic name back.
+# SessionStart therefore records the live session_id per workspace (SESSION file)
+# and topic mode exits when its own session_id is not the recorded one.
+#
 # Modes:
 #   (no args)  UserPromptSubmit / Stop: rename tab to the topic summary
 #   --blank    SessionStart: on clear/startup, mark the tab as "◌ blank"
@@ -27,7 +33,10 @@ CMUX_BIN="/Applications/cmux.app/Contents/Resources/bin/cmux"
 [ -x "$CMUX_BIN" ] || exit 0
 
 CACHE="${TMPDIR:-/tmp}/cmux_tab_title_${CMUX_WORKSPACE_ID}"
+SESSION="${CACHE}.session"   # session_id of the Claude session that currently owns this tab
 BLANK_LABEL="◌ blank"
+
+stdin_field() { printf '%s' "$stdin_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get(sys.argv[1]) or "")' "$1" 2>/dev/null; }
 
 read_topic() {
   "$CMUX_BIN" --json --id-format both list-pane-surfaces --workspace "$CMUX_WORKSPACE_ID" 2>/dev/null \
@@ -123,7 +132,11 @@ for w in json.loads(raw).get("workspaces") or []:
 
 if [ "$1" = "--blank" ]; then
   stdin_json=$(cat)
-  src=$(printf '%s' "$stdin_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("source") or "")' 2>/dev/null)
+  src=$(stdin_field source)
+  # Whoever just started (fresh, /clear, resume or compact) owns the tab from now
+  # on; late hooks from the previous session compare against this and bail out.
+  sid=$(stdin_field session_id)
+  [ -n "$sid" ] && printf '%s\n' "$sid" > "$SESSION"
   case "$src" in
     clear|startup) ;;
     # resume/compact keep the existing topic name, but a new tab shifts the
@@ -139,12 +152,18 @@ if [ "$1" = "--blank" ]; then
 fi
 
 stdin_json=$(cat)
-transcript=$(printf '%s' "$stdin_json" \
-  | python3 -c 'import json,sys; print((json.load(sys.stdin).get("transcript_path") or ""))' 2>/dev/null)
+transcript=$(stdin_field transcript_path)
+sid=$(stdin_field session_id)
 
 # Claude Code refreshes the topic title shortly after the turn starts;
 # wait so we read the new topic, not the previous one.
 sleep 8
+
+# Checked after the sleep on purpose: a /clear typed during those 8 seconds
+# rewrites SESSION, and this (now stale) hook must not rename the blanked tab.
+if [ -n "$sid" ] && [ -s "$SESSION" ] && [ "$(sed -n 1p "$SESSION")" != "$sid" ]; then
+  exit 0
+fi
 
 topic=$(read_topic) || exit 0
 [ -n "$topic" ] || exit 0
