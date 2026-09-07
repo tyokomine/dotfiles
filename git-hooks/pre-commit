@@ -6,6 +6,25 @@
 # daily-git-push is not disrupted. Escape hatch: `ALLOW_SECRET=1 git commit ...`.
 # NOTE: kept compatible with macOS system bash 3.2 (no mapfile / no set -e traps).
 
+# ── 凍結リポガード（2026-09-07 追加、経営会議#31/#32の指摘）────────────────
+# frozen-repos.txt に basename が載っているリポへの手動コミットを止める。
+# 注意: daily_git_push.sh は --no-verify でこの hook を通らないため、そちらは
+# 同じ frozen-repos.txt を読んで自前でスキップする（二層防御）。
+# Escape hatch: `ALLOW_FROZEN=1 git commit ...`（恒久解除は frozen-repos.txt の行を消す）。
+if [ "${ALLOW_FROZEN:-0}" != "1" ]; then
+  HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+  FROZEN_LIST="$HOOK_DIR/frozen-repos.txt"
+  if [ -f "$FROZEN_LIST" ]; then
+    repo_base="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
+    if [ -n "$repo_base" ] && grep -vE '^\s*(#|$)' "$FROZEN_LIST" | grep -qxF "$repo_base"; then
+      echo "✋ pre-commit blocked: '$repo_base' は凍結リポです。 list: $FROZEN_LIST" >&2
+      echo "   Apple 5.6 再審査は1本ずつ・3軸外は着手禁止。意図的な作業なら:" >&2
+      echo "   ALLOW_FROZEN=1 git commit ...   （恒久解除は frozen-repos.txt から行を削除）" >&2
+      exit 1
+    fi
+  fi
+fi
+
 if [ "${ALLOW_SECRET:-0}" = "1" ]; then
   exit 0
 fi
