@@ -52,7 +52,7 @@ Claude Codeのターミナルカスタマイズ2点セット。
 
 1. セッション情報（cwd・モデル・コンテキスト使用率バー）
 2. 5時間ウィンドウ使用率 + 尽きる時刻の予測
-3. 7日ウィンドウ使用率 + 尽きる時刻の予測 + **モデル別週次枠（Fable等）**
+3. 7日ウィンドウ使用率 + 尽きる時刻の予測
 4. 日次コスト（API換算$、`daily-cost.py` が全セッションのjsonlを集計）
 5. バックグラウンドエージェント状況
 
@@ -85,7 +85,8 @@ Claude Codeのターミナルカスタマイズ2点セット。
 ## 実装メモ
 
 - `refreshInterval` の単位は**秒・最小1**。1秒1コマがアニメーション上限速度
-- **モデル別週次枠（Fable等）**: statusline入力JSONの `.rate_limits` には全モデル共通の `five_hour`/`seven_day` しか来ないため、`/usage` 画面と同じ OAuth usage API（`api.anthropic.com/api/oauth/usage`）を叩いて `limits[]` の `kind=="weekly_scoped"` を7d行に追記する。トークンはmacOS Keychainの `Claude Code-credentials` から取得（＝**Claude Codeにログイン済みのMacでのみ動く**。取れない環境ではこの表示だけ静かにスキップ）。5分キャッシュ `/tmp/claude-oauth-usage-cache.json`・curl 3秒タイムアウト・失敗時は古いキャッシュを使い続ける
+- **モデル別週次枠（Fable等）は表示しない**（2026-09-03に削除）。statusline入力JSONの `.rate_limits` には `five_hour`/`seven_day` しか来ない。以前は Keychain の Claude Code OAuth トークンで `api.anthropic.com/api/oauth/usage` を叩いて補っていたが、Claude Code のトークンを他プログラムから使う行為は規約外（code.claude.com/docs/en/legal-and-compliance）のため撤去。Claude Code 側がモデル別枠をstatusline入力に渡すようになったら復活させる
+- `~/.claude-stats-reporter/` ディレクトリが存在する環境では、入力JSONの `rate_limits` をそのまま `rate_limits.json` に10分毎に書き出す（社内の利用量レポーター連携用。資格情報・API不使用。ディレクトリが無ければ何もしない）
 - アニメーションフレームはエポック秒から算出（`t % フレーム数`）ステートレス設計
 - リアクターは**1グリフ完結**が正解。複数文字構成（コア+外周）はフォント都合で角ばるため不採用
 - コストはstandard-tier公開価格による**概算**（1Mコンテキストプレミアム・batch割引は未考慮）。キャッシュは `/tmp/claude-daily-cost-cache.json`（TTL付き）

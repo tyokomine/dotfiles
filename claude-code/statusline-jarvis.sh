@@ -6,7 +6,7 @@
 # 【性能方針】refreshInterval=1 で毎秒・全セッション並列に走るため、外部コマンドの
 # exec 回数を最小化してある (jq 3回 + stat 1回 = 常時5回未満)。exec 1回ごとに
 # エンドポイントセキュリティ (AV) の検査が挟まるので、ここを増やすと即ファンが回る。
-#   - 入力JSON / コスト / OAuth usage は「1フィールド1jq」ではなく1回でまとめて取る
+#   - 入力JSON / コスト は「1フィールド1jq」ではなく1回でまとめて取る
 #   - date(1) は使わず $EPOCHSECONDS (bash 5+)
 #   - キャッシュ鮮度は埋め込み cached_at ではなくファイル mtime (stat 1回で3ファイル)
 #   - awk の数値整形は jq 側 / bash printf に寄せた
@@ -198,16 +198,26 @@ COST_TODAY_CACHE_FILE="/tmp/claude-daily-cost-today.json"  # today-only 出力
 COST_REST_TTL=120
 COST_TODAY_TTL=60
 COST_SCRIPT="$HOME/.claude/daily-cost.py"
-OAUTH_USAGE_CACHE="/tmp/claude-oauth-usage-cache.json"
-OAUTH_USAGE_TTL=300
+# 利用量レポーター v6 連携: statusline 入力の rate_limits をここに記録する (資格情報・API 不使用)
+RL_FILE="$HOME/.claude-stats-reporter/rate_limits.json"
+RL_TTL=600
 
 declare -A MT=()
 while read -r _n _m; do
   [ -n "${_n:-}" ] && MT["$_n"]=$_m
-done < <(stat -f '%N %m' "$COST_CACHE_FILE" "$COST_TODAY_CACHE_FILE" "$OAUTH_USAGE_CACHE" 2>/dev/null || true)
+done < <(stat -f '%N %m' "$COST_CACHE_FILE" "$COST_TODAY_CACHE_FILE" "$RL_FILE" 2>/dev/null || true)
 stale() {  # $1=path $2=TTL  (mtime 不明 = 未作成 → stale)
   (( NOW - ${MT["$1"]:-0} >= $2 ))
 }
+
+# ── rate_limits を利用量レポーター向けに記録 (10分に1回・jq 1回) ──
+# 2026-09-03: 以前ここで叩いていた oauth/usage エンドポイントは、Claude Code の OAuth トークンを
+# 他プログラムから使う行為として規約外 (code.claude.com/docs/en/legal-and-compliance) のため削除。
+if [ -n "${IN[5]:-}${IN[7]:-}" ] && [ -d "$HOME/.claude-stats-reporter" ] && stale "$RL_FILE" "$RL_TTL"; then
+  if printf '%s' "$input" | jq -c --argjson now "$NOW" '{capturedAt: $now, rateLimits: .rate_limits}' > "$RL_FILE.tmp" 2>/dev/null; then
+    mv -f "$RL_FILE.tmp" "$RL_FILE" 2>/dev/null || true
+  fi
+fi
 
 # ── Daily cost (all sessions/windows) ──
 # 二層キャッシュ:
@@ -275,46 +285,6 @@ if [ -f "$COST_CACHE_FILE" ]; then
     _c=$(jq -r --argjson t '[]' "$COST_JQ" "$COST_CACHE_FILE" 2>/dev/null) || _c=""
   fi
   [ -n "$_c" ] && mapfile -t C < <(printf '%s\n' "$_c")
-fi
-
-# ── モデル別週次枠 (Fable 等): OAuth usage API から取得 ──
-# statusline 入力 JSON には five_hour / seven_day しか来ないため、
-# /usage 画面と同じ oauth/usage エンドポイントを Keychain トークンで叩く。
-# 5分キャッシュ + curl 3秒タイムアウト。失敗時は古いキャッシュを使い続ける。
-if stale "$OAUTH_USAGE_CACHE" "$OAUTH_USAGE_TTL"; then
-  _tok=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
-    | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null) || _tok=""
-  if [ -n "$_tok" ]; then
-    _resp=$(curl -sS --max-time 3 "https://api.anthropic.com/api/oauth/usage" \
-      -H "Authorization: Bearer $_tok" \
-      -H "anthropic-beta: oauth-2025-04-20" 2>/dev/null) || _resp=""
-    if [ -n "$_resp" ] && printf '%s' "$_resp" | jq -e '.limits' >/dev/null 2>&1; then
-      printf '%s\n' "$_resp" > "$OAUTH_USAGE_CACHE"
-    fi
-  fi
-fi
-
-declare -a SC=()
-if [ -f "$OAUTH_USAGE_CACHE" ]; then
-  _s=$(jq -r '
-    ([.limits[]? | select(.kind == "weekly_scoped")][0]) as $s
-    | if $s == null then empty
-      else [ ($s.percent // 0 | tostring), ($s.scope.model.display_name // "model") ] | .[] end
-  ' "$OAUTH_USAGE_CACHE" 2>/dev/null) || _s=""
-  [ -n "$_s" ] && mapfile -t SC < <(printf '%s\n' "$_s")
-fi
-
-if [ -n "${SC[0]:-}" ]; then
-  sc_pct=${SC[0]}
-  sc_name=${SC[1]:-model}
-  printf -v sc_int "%.0f" "$sc_pct" 2>/dev/null || sc_int="${sc_pct%%.*}"
-  sc_color=$(color_for_pct "$sc_int")
-  sc_str="${ACCENT}${sc_name}${RESET} $(progress_bar "$sc_int") ${sc_color}${sc_int}%${RESET}"
-  if [ -n "$line3" ]; then
-    line3+="${sep}${sc_str}"
-  else
-    line3="${ACCENT}📅 7d${RESET}  ${sc_str}"
-  fi
 fi
 
 line4=""
