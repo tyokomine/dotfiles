@@ -5,7 +5,7 @@
 #
 # A. Apple Guideline 5.6 Review Suspended（2026-08-09）。1本ずつ再審査する方針、選定外は触らない
 brainrot_clicker
-brainrot_td
+# brainrot_td … requalify 2本目として横峯さん承認済み（2026-09-09）、凍結解除
 brainrot_runner
 brainrot_tycoon
 brainrot_survivors
