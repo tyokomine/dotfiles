@@ -34,7 +34,7 @@ CMUX_BIN="/Applications/cmux.app/Contents/Resources/bin/cmux"
 
 CACHE="${TMPDIR:-/tmp}/cmux_tab_title_${CMUX_WORKSPACE_ID}"
 SESSION="${CACHE}.session"   # session_id of the Claude session that currently owns this tab
-BLANK_LABEL="◌ blank"
+BLANK_LABEL="Claude 待機"
 
 stdin_field() { printf '%s' "$stdin_json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get(sys.argv[1]) or "")' "$1" 2>/dev/null; }
 
@@ -121,7 +121,7 @@ cmux = sys.argv[1]
 for w in json.loads(raw).get("workspaces") or []:
     title = (w.get("title") or "").strip()
     base = re.sub(r"^\d+\s*:\s*", "", title)
-    if not base.startswith(("✳", "◌")):
+    if not base.startswith(("✳", "◌", "Claude ", "Codex ")):
         continue
     want = "%d:%s" % (w.get("index", 0) + 1, base)
     if want != title:
@@ -196,7 +196,7 @@ if [ -z "$ja" ] && command -v claude >/dev/null 2>&1; then
   prompt="AIコーディングセッションのタブ名を作ってください。
 
 # 要件
-- 日本語11文字以内
+- 日本語9文字以内
 - 何の話題かが一目でわかる固有名詞・対象名（機能名・案件名・ツール名・相手先など）を必ず入れる
 - 「相談」「検討」「確認」「対応」「調査」「タスク」「スレッド」など中身のない語だけで終わらせない
 - 自動生成タイトルが中身のない語だけの場合は、セッション本文から具体的な話題を拾って名前にする
@@ -210,12 +210,12 @@ ${topic}"
 # セッション本文（冒頭）
 ${context}"
   fi
-  ja=$(claude -p --model haiku "$prompt" 2>/dev/null \
+  ja=$(env -u CMUX_WORKSPACE_ID -u CMUX_SURFACE_ID -u CMUX_TAB_ID -u CMUX_PANEL_ID "$HOME/.local/bin/claude" -p --model haiku "$prompt" 2>/dev/null \
     | python3 -c '
 import sys
 s = sys.stdin.read().strip().splitlines()
 s = s[-1].strip().strip("\"「」『』 ") if s else ""
-print(s[:12])
+print(s[:9])
 ')
 fi
 if [ -z "$ja" ]; then
@@ -223,9 +223,14 @@ if [ -z "$ja" ]; then
   ja=$(printf '%s' "$topic" | python3 -c 'import sys; s=sys.stdin.read().strip(); print(s[:24] + ("…" if len(s) > 24 else ""))')
 fi
 
+# Recheck after the summarizer: another session may have taken ownership.
+if [ -n "$sid" ] && [ -s "$SESSION" ] && [ "$(sed -n 1p "$SESSION")" != "$sid" ]; then
+  exit 0
+fi
+
 # Only real summaries are cached; blank mappings are written solely by --blank
 # mode so their mtime marks the /clear moment.
 printf '%s\n%s\n%s\n' "$topic" "$ja" "$ctx_fp" > "$CACHE"
-"$CMUX_BIN" rename-workspace --workspace "$CMUX_WORKSPACE_ID" "✳ $ja" >/dev/null 2>&1
+"$CMUX_BIN" rename-workspace --workspace "$CMUX_WORKSPACE_ID" "Claude $ja" >/dev/null 2>&1
 renumber
 exit 0

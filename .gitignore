@@ -13,3 +13,6 @@ _site/*
 !/git-hooks/**
 !/claude-code
 !/claude-code/**
+!/codex
+!/codex/**
+**/__pycache__/

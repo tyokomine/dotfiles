@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [{"hooks": [{"type": "command", "command": "python3 ~/.codex/hooks/cmux_tab_title.py", "timeout": 15}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "python3 ~/.codex/hooks/cmux_tab_title.py", "timeout": 45, "async": true}]}],
+    "Stop": [{"hooks": [{"type": "command", "command": "python3 ~/.codex/hooks/cmux_tab_title.py", "timeout": 45, "async": true}]}]
+  }
+}
