@@ -13,6 +13,10 @@ brainrot_screw
 # brainrot_block は games_requalify_run で横峯さん承認済みの正規作業中のため除外（2026-09-07）
 # street_hoops は fraudulent activity 指摘（2026-08-07）、返信方針は横峯さん判断待ち
 street_hoops
+# C. 数字による凍結（2026-09-18、company/app_metrics_review_20260918.md: DL 0〜1/週・D1 0%・広告imp 0）
+brainrot_arena
+brainrot_sort
+brainrot_stack
 # B. 戦略3軸外（current-strategy: 着手禁止）
 military-fit-coach
 speakdrill
