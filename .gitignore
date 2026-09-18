@@ -1,18 +1,33 @@
-# 全てのファイルを一度、無視する。
-/*
-# さらに、ドットから始まる設定ファイルを無視する。
-/.*
-_site/*
-# しかし、"無視したくないファイル"は以下に"![ファイル名]"で指定する。
-##### Gitで管理するファイルリスト #####
-!/_*
-!/.gitignore
-!/.tmux.conf
-!templates
-!/git-hooks
-!/git-hooks/**
-!/claude-code
-!/claude-code/**
-!/codex
-!/codex/**
-**/__pycache__/
+# Credentials & secrets
+.env
+*.pickle
+credentials.json
+token.pickle
+credentials/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
