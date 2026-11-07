@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -75,27 +76,68 @@ def rename(workspace, label):
                 run_cmux("rename-workspace", "--workspace", item["id"], wanted)
 
 
+def watch_clear(event, workspace):
+    surface = os.environ.get("CMUX_SURFACE_ID")
+    cwd = event.get("cwd")
+    watcher = Path(__file__).with_name("cmux_title_watch.py")
+    if not surface or not cwd or not watcher.is_file():
+        return
+    prefix = Path(tempfile.gettempdir()) / f"cmux_tab_title_{workspace}"
+    path = Path(str(prefix) + ".watch.json")
+    temporary = path.with_suffix(f".{os.getpid()}.tmp")
+    temporary.write_text(json.dumps({"workspace": workspace, "surface": surface,
+                                     "session_id": event["session_id"], "cwd": cwd}))
+    temporary.replace(path)
+    with (Path(tempfile.gettempdir()) / "cmux_codex_title_watch.lock").open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+    # cmuxOnly checks ancestry when connecting. Open and authenticate while
+    # this hook is still a cmux descendant, then keep that connection alive.
+    with socket.socket(socket.AF_UNIX) as client:
+        client.settimeout(3)
+        client.connect(os.environ.get("CMUX_SOCKET_PATH", "/tmp/cmux.sock"))
+        client.sendall(b'{"id":"watch-start","method":"system.ping","params":{}}\n')
+        with client.makefile("rb") as stream:
+            response = json.loads(stream.readline())
+        if not response.get("ok"):
+            return
+        subprocess.Popen([sys.executable, str(watcher), "--socket-fd", str(client.fileno())],
+                         pass_fds=(client.fileno(),), stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+
+
 def main(event):
     workspace = os.environ.get("CMUX_WORKSPACE_ID", "")
     sid = event.get("session_id", "")
     if not workspace or not sid or not Path(CMUX).is_file():
         return
     source, user, assistant = transcript(event.get("transcript_path"))
-    # Fail closed for exec, app-server and subagents; their env can inherit CMUX_*.
-    if source != "cli":
-        return
     prefix = Path(tempfile.gettempdir()) / f"cmux_tab_title_{workspace}"
     owner = Path(str(prefix) + ".session")
     cache = Path(str(prefix) + ".codex.json")
     lock = Path(str(prefix) + ".codex.lock")
     identity = "Codex:" + sid
     kind = event.get("hook_event_name")
+    clearing = kind == "SessionStart" and event.get("source") == "clear"
+    # A clear can arrive before the new rollout has been flushed. Only allow
+    # that missing-metadata case for an already managed Codex workspace.
+    known_workspace = owner.exists() and owner.read_text().strip().startswith("Codex:")
+    if source != "cli" and not (source is None and clearing and known_workspace):
+        return
     if kind == "SessionStart":
         owner.write_text(identity + "\n")
+        if clearing:
+            cache.unlink(missing_ok=True)
+            rename(workspace, "Codex 待機")
+            return
         # Fast synchronous start; resumed summaries are restored from cache.
         saved = json.loads(cache.read_text()) if cache.exists() else {}
         label = saved.get("label") if saved.get("session_id") == sid else None
         rename(workspace, "Codex " + (label or "待機"))
+        watch_clear(event, workspace)
         return
     if kind not in ("UserPromptSubmit", "Stop"):
         return
@@ -122,6 +164,7 @@ def main(event):
         rename(workspace, "Codex " + label)
         cache.write_text(json.dumps({"session_id": sid, "fingerprint": fingerprint,
                                      "label": label}, ensure_ascii=False))
+        watch_clear(event, workspace)
 
 
 if __name__ == "__main__":

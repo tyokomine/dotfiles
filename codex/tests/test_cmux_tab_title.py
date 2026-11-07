@@ -53,6 +53,41 @@ class TitleTests(unittest.TestCase):
         rename.assert_not_called()
 
     @patch.object(hook, "rename")
+    @patch.object(hook, "summarize", return_value="旧作業名")
+    def test_clear_discards_cached_title(self, summarize, rename):
+        hook.main(dict(self.event, hook_event_name="SessionStart"))
+        hook.main(dict(self.event, hook_event_name="Stop"))
+        hook.main(dict(self.event, hook_event_name="SessionStart", source="clear"))
+        rename.assert_called_with("test-workspace", "Codex 待機")
+        self.assertFalse((Path(self.tmp.name) / "cmux_tab_title_test-workspace.codex.json").exists())
+
+    @patch.object(hook, "rename")
+    def test_clear_before_transcript_is_written(self, rename):
+        hook.main(dict(self.event, hook_event_name="SessionStart"))
+        hook.main(dict(self.event, session_id="new", transcript_path=None,
+                       hook_event_name="SessionStart", source="clear"))
+        rename.assert_called_with("test-workspace", "Codex 待機")
+        owner = Path(self.tmp.name) / "cmux_tab_title_test-workspace.session"
+        self.assertEqual(owner.read_text().strip(), "Codex:new")
+        count = rename.call_count
+        hook.main(dict(self.event, hook_event_name="Stop"))
+        self.assertEqual(rename.call_count, count)
+
+    @patch.object(hook, "rename")
+    def test_clear_does_not_claim_unknown_workspace(self, rename):
+        hook.main(dict(self.event, transcript_path=None,
+                       hook_event_name="SessionStart", source="clear"))
+        rename.assert_not_called()
+
+    @patch.object(hook, "rename")
+    def test_clear_rejects_explicit_noninteractive_source(self, rename):
+        hook.main(dict(self.event, hook_event_name="SessionStart"))
+        rename.reset_mock()
+        self.path.write_text(self.path.read_text().replace('"cli"', '"exec"'))
+        hook.main(dict(self.event, hook_event_name="SessionStart", source="clear"))
+        rename.assert_not_called()
+
+    @patch.object(hook, "rename")
     def test_switch_during_summary(self, rename):
         hook.main(dict(self.event, hook_event_name="SessionStart"))
         def switch(*_):
