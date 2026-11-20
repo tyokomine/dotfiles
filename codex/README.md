@@ -12,6 +12,8 @@
 
 ## 導入
 
+共有デーモンを使うCodexでは、フックがcmuxのプロセスツリーから外れ、cmuxの標準アクセス設定で改名に失敗します。`cmux.zsh` を `~/.codex/cmux.zsh` にコピーし、`~/.zshrc` から `source ~/.codex/cmux.zsh` で読み込みます。cmux内の新規セッションには `--no-daemon` が付きます。既存の会話は `codex resume <会話UUID>` で再開します。共有デーモンがその会話を保持している場合は、起動元のシェルでタブ名を設定してから共有デーモンへ再接続します。
+
 `hooks/cmux_tab_title.py` と `hooks/cmux_title_watch.py` を `~/.codex/hooks/` へコピーし、`hooks-settings.snippet.json` の `hooks` を `~/.codex/hooks.json` へマージしてください。既存hookは保持します。既存の導入環境では次のhookから反映され、新規導入では新しいCodexプロセスから有効です。
 
 Claude側の `../claude-code/hooks/cmux_tab_title.sh` も `~/.claude/hooks/` にコピーします。

@@ -47,6 +47,19 @@ class TitleTests(unittest.TestCase):
         self.assertEqual(rename.call_count, count)
 
     @patch.object(hook, "rename")
+    def test_vscode_source_requires_terminal_originator(self, rename):
+        records = self.path.read_text().splitlines()
+        for originator in ("codex_vscode", "codex-tui"):
+            records[0] = json.dumps({"type": "session_meta", "payload": {
+                "source": "vscode", "originator": originator}})
+            self.path.write_text("\n".join(records))
+            hook.main(dict(self.event, hook_event_name="SessionStart"))
+            if originator == "codex-tui":
+                rename.assert_called_once_with("test-workspace", "Codex 待機")
+            else:
+                rename.assert_not_called()
+
+    @patch.object(hook, "rename")
     def test_noninteractive_ignored(self, rename):
         self.path.write_text(self.path.read_text().replace('"cli"', '"exec"'))
         hook.main(dict(self.event, hook_event_name="SessionStart"))
@@ -107,3 +120,26 @@ class TitleTests(unittest.TestCase):
         self.assertIn(("rename-workspace", "--workspace", "a", "1:Claude 既存"), calls)
         self.assertIn(("rename-workspace", "--workspace", "c", "3:Codex 要約"), calls)
         self.assertFalse(any("b" in args for args in calls))
+
+    def test_shared_resume_selects_owner_and_only_renames_calling_surface(self):
+        sid = "12345678-1234-4321-8321-123456789abc"
+        root = Path(self.tmp.name)
+        (root / "app-server-daemon").mkdir()
+        (root / "app-server-daemon/daemon.pid").write_text('{"pid": 315}')
+        (root / "sessions").mkdir()
+        self.path.rename(root / "sessions" / ("rollout-" + sid + ".jsonl"))
+        with patch.dict(os.environ, CODEX_HOME=str(root), CMUX_SURFACE_ID="surface"), \
+             patch.object(hook.subprocess, "run") as process, \
+             patch.object(hook, "run_cmux") as cmux, \
+             patch.object(hook, "summarize", return_value="タブ名修正") as summarize:
+            process.return_value.stdout = ""
+            self.assertFalse(hook.shared_resume(sid))
+            cmux.assert_not_called()
+            process.return_value.stdout = "315\n"
+            rows = '{"workspaces":[{"id":"test-workspace","index":6}]}'
+            cmux.side_effect = [rows, '{"surfaces":[{"id":"other"}]}']
+            self.assertTrue(hook.shared_resume(sid))
+            summarize.assert_not_called()
+            cmux.side_effect = [rows, '[{"surfaces":[{"id":"surface"}]}]', ""]
+            self.assertTrue(hook.shared_resume(sid))
+            cmux.assert_called_with("rename-workspace", "--workspace", "test-workspace", "7:Codex タブ名修正")

@@ -19,6 +19,42 @@ def run_cmux(*args):
                           timeout=4, check=True).stdout
 
 
+def shared_resume(session_id):
+    """Called by the terminal that is about to resume this exact thread."""
+    import uuid
+
+    if str(uuid.UUID(session_id)) != session_id:
+        return False
+    root = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+    pid = int(json.loads((root / "app-server-daemon/daemon.pid").read_text())["pid"])
+    lock = root / "thread-writer-locks" / (session_id + ".lock")
+    result = subprocess.run(["/usr/sbin/lsof", "-a", "-p", str(pid), "-t", str(lock)],
+                            capture_output=True, text=True, timeout=3)
+    if result.stdout.strip() != str(pid):
+        return False
+    # Failure of cosmetic work must not change the selected backend.
+    try:
+        workspace = os.environ["CMUX_WORKSPACE_ID"]
+        surface = os.environ["CMUX_SURFACE_ID"]
+        rows = json.loads(run_cmux("--json", "--id-format", "uuids", "list-workspaces"))["workspaces"]
+        row = next(r for r in rows if r["id"].lower() == workspace.lower())
+        panes = json.loads(run_cmux("--json", "--id-format", "uuids", "list-pane-surfaces",
+                                    "--workspace", workspace))
+        if isinstance(panes, dict):
+            panes = [panes]
+        if not any(s["id"].lower() == surface.lower() for p in panes for s in p["surfaces"]):
+            raise ValueError("surface mismatch")
+        path = next((root / "sessions").rglob("*-" + session_id + ".jsonl"))
+        _, user, assistant = transcript(path)
+        label = summarize(user, assistant) if user else ""
+        if label:
+            run_cmux("rename-workspace", "--workspace", workspace,
+                     f"{row['index'] + 1}:Codex {label}")
+    except (KeyError, OSError, StopIteration, ValueError, subprocess.SubprocessError) as error:
+        print(f"cmux title update skipped ({type(error).__name__}).", file=sys.stderr)
+    return True
+
+
 def transcript(path):
     """Only use real user/assistant text; exclude instructions and tool output."""
     source, user, assistant = None, "", ""
@@ -33,6 +69,9 @@ def transcript(path):
             payload = item.get("payload", {})
             if item.get("type") == "session_meta":
                 source = payload.get("source")
+                # The app-server-backed terminal UI also emits vscode rollouts.
+                if source == "vscode" and payload.get("originator") == "codex-tui":
+                    source = "cli"
             if item.get("type") != "response_item" or payload.get("type") != "message":
                 continue
             content = payload.get("content", [])
@@ -169,6 +208,8 @@ def main(event):
 
 if __name__ == "__main__":
     try:
+        if len(sys.argv) == 3 and sys.argv[1] == "--shared-resume":
+            sys.exit(0 if shared_resume(sys.argv[2]) else 1)
         main(json.load(sys.stdin))
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
-        pass  # Cosmetic hooks must never interrupt the user's session.
+        sys.exit(1 if len(sys.argv) > 1 else 0)
